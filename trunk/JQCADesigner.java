@@ -1,7 +1,14 @@
 package jqcadesigner;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import jqcadesigner.Options.DuplicateOptionKeyException;
+import jqcadesigner.Options.InvalidTypeException;
+import jqcadesigner.Options.ParseException;
 
 import jqcadesigner.engines.BistableEngine;
 import jqcadesigner.engines.Engine;
@@ -9,147 +16,144 @@ import jqcadesigner.engines.Engine;
 // TODO: create configuration class that allows you to load a config file.
 // TODO: make it so that Engine will accept a config file name as an option and will load the file as part of its constructor.
 // TODO: write out the Circuit class so that circuits can be loaded and create all the objects needed for it
-// TODO: 
+// TODO: add logger
 public class JQCADesigner
 {
 	public static String[] VALID_ENGINES = { "bistable" };
-	
+
+	public static final Options options = new Options();
+
+	static
+	{
+		try
+		{
+			// The circuit file.
+			options.addOption( "-f", "" );
+
+			// The simulation engine.
+			options.addOption( "-e", "bistable" );
+
+			// The simulation engine configuration file.
+			options.addOption( "-c", "" );
+
+			// The number of simulations to run.
+			options.addOption( "-n", 1 );
+
+			// The radial tolerance.
+			options.addOption( "-t", 0 );
+
+			// The vector table file.
+			options.addOption( "--vt", "" );
+			
+			// Whether or not to output verbosely.
+			options.addOption( "--verbose", true );
+
+			// Whether or not to run in command line mode.
+			options.addOption( "--clm", true );
+		}
+		catch( DuplicateOptionKeyException ex )
+		{
+			Logger.getLogger( JQCADesigner.class.getName() ).log( Level.SEVERE, null, ex );
+		}
+		catch( InvalidTypeException ex )
+		{
+			Logger.getLogger( JQCADesigner.class.getName() ).log( Level.SEVERE, null, ex );
+		}
+	}
+
 	/**
 	 * @param args
 	 */
 	public static void main( String[] args )
 	{
-		Arguments userArgs = handleArgs( args );
-		
-		Circuit circuit = new Circuit( userArgs.circuitFileName );
-		
-		if( userArgs.commandLineMode )
-		{	
+		try
+		{
+			handleArgs( args );
+		}
+		catch( Exception ex )
+		{
+			System.err.println( ex.getMessage() );
+			System.exit( 1 );
+		}
+
+		Circuit circuit = null;
+		VectorTable vectorTable = null;
+
+		try
+		{
+			circuit = new Circuit( (String)options.get( "-f" ) );
+
+			if( !options.get( "--vt" ).equals( "" ) )
+			{
+				vectorTable = new VectorTable( (String)options.get( "--vt" ) );
+			}
+		}
+		catch( Exception ex )
+		{
+			System.err.println( ex.getMessage() );
+			System.exit( 2 );
+		}
+
+		boolean commandLineMode = (Boolean)options.get( "--clm" );
+		if( commandLineMode )
+		{
 			Engine engine = null;
 			
-			if( userArgs.engineName == "bistable" )
+			String engineName = (String)options.get( "-e" );
+			String engineConfigFileName = (String)options.get( "-c" );
+			
+			if( engineName.equals(  "bistable" ) )
 			{
-				engine = new BistableEngine( circuit, System.out, userArgs.engineConfigFileName );
+				engine = new BistableEngine(	circuit,
+												System.out,
+												engineConfigFileName );
 			}
 			else
 			{
-				System.err.println( "Invalid engine name: " + userArgs.engineName );
-				System.exit( 1 );
+				System.err.println( "Invalid engine name: " + engineName );
+				System.exit( 3 );
 			}
-			
-			Engine.RunResults results = engine.run( userArgs.verbose );
+
+			Engine.RunResults results;
+			results = engine.run( vectorTable, (Boolean)options.get( "--verbose" ) );
 			
 			results.printStats();
 		}
 		else
 		{
-			System.err.println( "The GUI version of JQCADesigner has not be implemented." );
+			System.err.println( "The GUI version of JQCADesigner has not been implemented." );
 		}
 	}
 	
-	public static Arguments handleArgs( String[] args )
+	public static void handleArgs( String[] args ) throws Exception
 	{
-		Arguments retval = new Arguments();
-		
-		// Define default arguments.
-		retval.engineName = "bistable";
-		retval.numberOfSimulations = 1;
-		retval.radialTolerance = 0.0f;
-		
-		// Parse out the arguments.
-		for( int i = 1; i < args.length; ++i )
+		options.parseArgs( args );
+
+		String circuitFile = (String)options.get( "-f" );
+		String engineName = (String)options.get( "-e" );
+
+		if( circuitFile.equals( "" ) )
 		{
-			if( args[i] == "-f" && ++i < args.length )
-			{				
-				if( !UtilityFunctions.doesFileExist( args[i] ) )
-				{
-					System.err.println( "The circuit file <"+args[i]+"> does not exist." );
-					System.exit( 1 );
-				}
-				
-				retval.circuitFileName = args[i];
-			}
-			else if( args[i] == "-e" && ++i < args.length )
-			{
-				args[i] = args[i].toLowerCase();
-				if( !isValidEngineName( args[i] ) )
-				{
-					System.err.println( "The engine name specified by option '-e' is not valid." );
-					System.exit( 1 );
-				}
-				retval.engineName = args[i];
-			}
-			else if( args[i] == "-c" && ++i < args.length )
-			{
-				if( !UtilityFunctions.doesFileExist( args[i] ) )
-				{
-					System.err.println( "The engine config file <"+args[i]+"> does not exist." );
-					System.exit( 1 );
-				}
-				
-				retval.engineConfigFileName = args[i];
-			}
-			else if( args[i] == "-n" && ++i < args.length )
-			{
-				try
-				{
-					retval.numberOfSimulations = Integer.parseInt( args[i] );
-					if( retval.numberOfSimulations < 1 )
-					{
-						System.err.println( "The number of simulations specified by option '-n' must be greater than 0.");
-					}
-				}
-				catch( NumberFormatException ex )
-				{
-					System.err.println( "The number of simulations specified by option '-n' must be an integer" );
-					System.exit( 1 );
-				}
-			}
-			else if( args[i] == "-t" && ++i < args.length )
-			{
-				try
-				{
-					retval.radialTolerance = Float.parseFloat( args[i] );
-					
-					if( retval.radialTolerance < 0 )
-					{
-						System.err.println( "The radial tolerance specified by '-t' must be greater than or equal to 0." );
-						System.exit( 1 );
-					}
-				}
-				catch( NumberFormatException ex )
-				{
-					System.err.println( "The radial tolerance specified by '-t' must be a floating-point number." );
-					System.exit( 1 );
-				}
-			}
-			else if( args[i] == "-vt" && ++i < args.length )
-			{
-				if( !UtilityFunctions.doesFileExist( args[i] ) )
-				{
-					System.err.println( "The vector table file <"+args[i]+"> does not exist." );
-					System.exit( 1 );
-				}
-				
-				retval.vectorTableFileName = args[i];
-			}
+			throw new Exception( "A circuit file must be specified." );
 		}
 
-		if( !retval.isSufficient() )
+		if( !(new File( circuitFile )).isFile() )
 		{
-			System.err.println( "Insufficient arguments passed." );
-			usage( args[0] );
-			System.exit( 1 );
+			String msg = "The specified circuit must exist and be a file";
+			throw new Exception( msg );
 		}
-		
-		return retval;
+
+		if( !isValidEngineName( engineName ) )
+		{
+			throw new Exception( "Invalid engine name: '" + engineName );
+		}
 	}
 
 	public static boolean isValidEngineName( String engineName )
 	{
 		for( String validName : JQCADesigner.VALID_ENGINES )
 		{
-			if( validName == engineName )
+			if( validName.equals( engineName ) )
 			{
 				return true;
 			}
@@ -158,44 +162,12 @@ public class JQCADesigner
 		return false;
 	}
 	
+
 	public static void usage( String programName )
 	{
 		System.out.println(
 				"Usage: "+programName+" -f circuit_file -e engine_name " +
 				"[-c engine_config_file] [-n number_of_simulations] [-t radial_tolerance] [-vt vector_table_file]"
 		);
-	}
-	
-	/**
-	 * Stores the arguments passed from the command line.
-	 * @author Robert
-	 */
-	public static class Arguments
-	{
-		public boolean commandLineMode = true;
-		public boolean verbose = true;
-		public String circuitFileName;
-		public String engineName;
-		public String engineConfigFileName;
-		public int numberOfSimulations;
-		public float radialTolerance;
-		public String vectorTableFileName;
-		
-		/**
-		 * Determines whether or not the current set of arguments is sufficient to execute a run.
-		 */
-		public boolean isSufficient()
-		{
-			if(	circuitFileName != null		&&
-				engineName != null			&&
-				numberOfSimulations > 0		&&
-				radialTolerance >= 0
-				)
-			{
-				return true;
-			}
-			
-			return false;
-		}
 	}
 }
