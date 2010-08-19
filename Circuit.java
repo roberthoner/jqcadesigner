@@ -2,7 +2,7 @@ package jqcadesigner;
 
 public final class Circuit
 {
-	public Circuit( String circuitFileName )
+	Circuit( String circuitFileName )
 	{
 		_load( circuitFileName );
 	}
