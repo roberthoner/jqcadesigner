@@ -3,6 +3,7 @@ package jqcadesigner.engines;
 import java.io.PrintStream;
 
 import jqcadesigner.Circuit;
+import jqcadesigner.VectorTable;
 
 public abstract class Engine
 {
@@ -20,20 +21,20 @@ public abstract class Engine
 		this( circuit, System.out );
 	}
 	
-	public RunResults run( boolean output )
+	public RunResults run( VectorTable vectorTable, boolean output )
 	{
 		RunResults retval;
 		
 		long startTime = System.currentTimeMillis();
 		
-		retval = _run( output );
+		retval = _run( vectorTable, output );
 		
 		retval.runTime = System.currentTimeMillis() - startTime;
 		
 		return retval;
 	}
 	
-	abstract protected RunResults _run( boolean output );
+	abstract protected RunResults _run( VectorTable vectorTable, boolean output );
 	
 	public abstract class RunResults
 	{

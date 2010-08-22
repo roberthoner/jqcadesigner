@@ -3,6 +3,7 @@ package jqcadesigner.engines;
 import java.io.PrintStream;
 
 import jqcadesigner.Circuit;
+import jqcadesigner.VectorTable;
 
 public final class BistableEngine extends Engine
 {
@@ -32,7 +33,7 @@ public final class BistableEngine extends Engine
 	}
 	
 	@Override
-	protected RunResults _run( boolean output )
+	protected RunResults _run( VectorTable vectorTable, boolean output )
 	{
 		RunResults retval = new RunResults();
 		
@@ -43,6 +44,7 @@ public final class BistableEngine extends Engine
 	
 	public class RunResults extends Engine.RunResults
 	{
+		@Override
 		public void printStats()
 		{
 			
