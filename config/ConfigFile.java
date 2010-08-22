@@ -123,7 +123,7 @@ public class ConfigFile extends SectionMap
 					}
 					else // Assume it's a DataConfigLine
 					{
-						section = new DataSection();
+						section = new DataSection( subSections );
 					}
 				}
 
@@ -131,7 +131,7 @@ public class ConfigFile extends SectionMap
 				{
 					section.put( configLine );
 				}
-				catch( RuntimeException ex )
+				catch( Exception ex )
 				{
 					String msg =	"Exception on line " + currentLineNum + ": "
 									+ ex.getMessage();
@@ -139,6 +139,13 @@ public class ConfigFile extends SectionMap
 					throw new ParseException( msg );
 				}
 			}
+		}
+
+		// Check to see if there were no config lines in the section.
+		if( section == null )
+		{
+			// Wrap the subsections in a generic section.
+			section = new Section( subSections );
 		}
 
 		return new SectionTriple( sectionName, section, currentLineNum );

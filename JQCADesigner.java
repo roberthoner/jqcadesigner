@@ -27,6 +27,7 @@
 
 package jqcadesigner;
 
+import jqcadesigner.circuit.Circuit;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -48,10 +49,13 @@ public class JQCADesigner
 {
 	public static String[] VALID_ENGINES = { "bistable" };
 
+	public static final Logger log;
 	public static final Options options = new Options();
 
 	static
 	{
+		log = Logger.getLogger( JQCADesigner.class.getName() );
+
 		try
 		{
 			// The circuit file.
@@ -78,13 +82,9 @@ public class JQCADesigner
 			// Whether or not to run in command line mode.
 			options.addOption( "--clm", true );
 		}
-		catch( DuplicateOptionKeyException ex )
+		catch( Exception ex )
 		{
-			Logger.getLogger( JQCADesigner.class.getName() ).log( Level.SEVERE, null, ex );
-		}
-		catch( InvalidTypeException ex )
-		{
-			Logger.getLogger( JQCADesigner.class.getName() ).log( Level.SEVERE, null, ex );
+			log.severe( ex.getMessage() );
 		}
 	}
 
