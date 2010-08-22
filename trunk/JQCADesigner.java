@@ -9,11 +9,11 @@ import java.util.logging.Logger;
 import jqcadesigner.Options.DuplicateOptionKeyException;
 import jqcadesigner.Options.InvalidTypeException;
 import jqcadesigner.Options.ParseException;
+import jqcadesigner.config.ConfigFile;
 
 import jqcadesigner.engines.BistableEngine;
 import jqcadesigner.engines.Engine;
 
-// TODO: create configuration class that allows you to load a config file.
 // TODO: make it so that Engine will accept a config file name as an option and will load the file as part of its constructor.
 // TODO: write out the Circuit class so that circuits can be loaded and create all the objects needed for it
 // TODO: add logger
@@ -76,33 +76,41 @@ public class JQCADesigner
 			System.exit( 1 );
 		}
 
-		Circuit circuit = null;
-		VectorTable vectorTable = null;
+		if( (Boolean)options.get( "--clm" ) )
+		{
+			enterCommandLineMode();
+		}
+		else
+		{
+			enterGUIMode();
+		}
+	}
+
+	public static void enterCommandLineMode()
+	{
+		Circuit circuit				= null;
+		VectorTable vectorTable		= null;
+		Engine engine				= null;
+
+		String circuitFile			= (String)options.get( "-f" );
+		String vectorTableFile		= (String)options.get( "--vt" );
+		String engineName			= (String)options.get( "-e" );
+		String engineConfigFileName	= (String)options.get( "-c" );
 
 		try
 		{
-			circuit = new Circuit( (String)options.get( "-f" ) );
+			circuit = new Circuit( circuitFile );
 
-			if( !options.get( "--vt" ).equals( "" ) )
+			if( !vectorTableFile.equals( "" ) )
 			{
-				vectorTable = new VectorTable( (String)options.get( "--vt" ) );
+				vectorTable = new VectorTable( vectorTableFile );
 			}
-		}
-		catch( Exception ex )
-		{
-			System.err.println( ex.getMessage() );
-			System.exit( 2 );
-		}
+			else
+			{
+				vectorTable = null;
+			}
 
-		boolean commandLineMode = (Boolean)options.get( "--clm" );
-		if( commandLineMode )
-		{
-			Engine engine = null;
-			
-			String engineName = (String)options.get( "-e" );
-			String engineConfigFileName = (String)options.get( "-c" );
-			
-			if( engineName.equals(  "bistable" ) )
+			if( engineName.equals( "bistable" ) )
 			{
 				engine = new BistableEngine(	circuit,
 												System.out,
@@ -115,16 +123,21 @@ public class JQCADesigner
 			}
 
 			Engine.RunResults results;
-			results = engine.run( vectorTable, (Boolean)options.get( "--verbose" ) );
-			
+			results = engine.run( vectorTable, true );
+
 			results.printStats();
 		}
-		else
+		catch( Exception ex )
 		{
-			System.err.println( "The GUI version of JQCADesigner has not been implemented." );
+			System.err.println( ex.getMessage() );
 		}
 	}
-	
+
+	public static void enterGUIMode()
+	{
+		System.err.println( "GUI mode is not implemented." );
+	}
+
 	public static void handleArgs( String[] args ) throws Exception
 	{
 		options.parseArgs( args );
@@ -139,13 +152,13 @@ public class JQCADesigner
 
 		if( !(new File( circuitFile )).isFile() )
 		{
-			String msg = "The specified circuit must exist and be a file";
+			String msg = "The specified circuit must exist and be a file.";
 			throw new Exception( msg );
 		}
 
 		if( !isValidEngineName( engineName ) )
 		{
-			throw new Exception( "Invalid engine name: '" + engineName );
+			throw new Exception( "Invalid engine name: " + engineName );
 		}
 	}
 
@@ -162,12 +175,14 @@ public class JQCADesigner
 		return false;
 	}
 	
-
-	public static void usage( String programName )
+	public static void usage()
 	{
+		String programName = "JQCADesigner";
+
 		System.out.println(
-				"Usage: "+programName+" -f circuit_file -e engine_name " +
-				"[-c engine_config_file] [-n number_of_simulations] [-t radial_tolerance] [-vt vector_table_file]"
-		);
+				"Usage: "+programName+" -f circuit_file -e engine_name "
+				+ "[-c engine_config_file] [-n number_of_simulations] "
+				+ "[-t radial_tolerance] [-vt vector_table_file]"
+			);
 	}
 }

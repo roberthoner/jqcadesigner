@@ -17,8 +17,8 @@ import java.util.ArrayList;
  */
 public final class VectorTable
 {
-	public boolean[] active;
-	public boolean[][] inputs;
+	private boolean[] active;
+	private boolean[][] inputs;
 
 	public VectorTable( String vectorTableFile )
 		throws FileNotFoundException, IOException, ParseException
@@ -139,7 +139,7 @@ public final class VectorTable
 
 	private boolean _isComment( String line )
 	{
-		return line.trim().charAt( 0 ) == '#';
+		return line.charAt( 0 ) == '#';
 	}
 
 	public static class ParseException extends Exception
