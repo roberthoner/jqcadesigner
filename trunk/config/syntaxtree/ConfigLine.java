@@ -46,6 +46,6 @@ public abstract class ConfigLine
 	@Override
 	public String toString()
 	{
-		return getClass().getName();
+		return getClass().getSimpleName();
 	}
 }

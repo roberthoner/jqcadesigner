@@ -1,7 +1,7 @@
 /*
  *  Copyright (c) 2010 Robert Honer <rhoner@cs.ucla.edu>
  *  All rights reserved.
- *
+ * 
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
  *      * Redistributions of source code must retain the above copyright
@@ -12,7 +12,7 @@
  *      * Neither the name of the <organization> nor the
  *        names of its contributors may be used to endorse or promote products
  *        derived from this software without specific prior written permission.
- *
+ * 
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -25,76 +25,13 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package jqcadesigner.config.syntaxtree;
-
-import java.util.HashMap;
+package jqcadesigner.circuit.units;
 
 /**
- * Represents a section within the config file.
  *
- * A representation of a section within the configuration file.  A section
- * is defined by blocks like so:
- *
- *		[SECTIONNAME]
- *		mysetting=Some Value
- *		another.setting=1.0
- *		[#SECTIONNAME]
- *
- * This class stores the mapping between setting names and setting values.
+ * @author Robert Honer <rhoner@cs.ucla.edu>
  */
-public class Section
+public class QuantumDot
 {
-	public final SectionMap subSections;
 
-	/**
-	 * Constructs the Section.
-	 *
-	 * @param startingLineNum The line number in the file that the section started.
-	 */
-	public Section()
-	{
-		subSections = new SectionMap();
-	}
-
-	public Section( SectionMap ss )
-	{
-		subSections = ss;
-	}
-
-	/**
-	 * @see SectionMap.put
-	 *
-	 * @param sectionName
-	 * @param section
-	 */
-	public void addSubSection( SectionTriple sectionPair )
-	{
-		subSections.put( sectionPair );
-	}
-
-	/**
-	 * Take in config line data, this should be overridden by a subclass.
-	 *
-	 * @param configLine
-	 */
-	public void put( ConfigLine configLine )
-	{
-		throw new RuntimeException( "Cannot put into this section." );
-	}
-
-	public boolean containsSettings()
-	{
-		return false;
-	}
-
-	public boolean containsData()
-	{
-		return false;
-	}
-
-	@Override
-	public String toString()
-	{
-		return getClass().getSimpleName();
-	}
 }

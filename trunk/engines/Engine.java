@@ -29,7 +29,7 @@ package jqcadesigner.engines;
 
 import java.io.PrintStream;
 
-import jqcadesigner.Circuit;
+import jqcadesigner.circuit.Circuit;
 import jqcadesigner.VectorTable;
 
 public abstract class Engine
