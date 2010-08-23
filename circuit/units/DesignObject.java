@@ -27,18 +27,18 @@
 
 package jqcadesigner.circuit.units;
 
+import java.awt.Color;
+
 /**
  *
  * @author Robert Honer <rhoner@cs.ucla.edu>
  */
-public class Layer
+public class DesignObject
 {
-	public final byte status;
-	public final String description;
+/*	public final double x;
+	public final double y;
+	public final boolean selected;
+	public final Color color;
+*/
 
-	public Layer( String d, byte s )
-	{
-		description = d;
-		status = s;
-	}
 }

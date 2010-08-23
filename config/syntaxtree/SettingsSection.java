@@ -68,8 +68,30 @@ public class SettingsSection extends Section
 		settings.put( settingConfigLine.name, settingConfigLine.value );
 	}
 
+	/**
+	 * Determines whether the setting names specified are defined.
+	 * @param settingNames
+	 * @return
+	 */
+	public boolean containsSettings( String ... settingNames )
+	{
+		for( String settingName : settingNames )
+		{
+			// Using "get" here instead of "containsKey", so that I can explicitly
+			// check for null values.  Just because the key may exist doesn't
+			// mean that the key doesn't point to a null value. Checking
+			// explicitly for null values helps avoid NullPointerExceptions.
+			if( settings.get( settingName ) == null )
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	@Override
-	public boolean containsSettings()
+	public boolean hasSettings()
 	{
 		return true;
 	}

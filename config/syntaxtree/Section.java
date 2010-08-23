@@ -72,6 +72,23 @@ public class Section
 		subSections.put( sectionPair );
 	}
 
+	public boolean containsSubSections( String ... subSectionNames )
+	{
+		for( String subSectionName : subSectionNames )
+		{
+			// Using get here instead of containsKey, so that I can explicitly
+			// check for null values.  Just because the key may exist doesn't
+			// mean that the key doesn't point to a null value. Checking
+			// explicitly for null values helps avoid NullPointerExceptions.
+			if( subSections.get( subSectionName ) == null )
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 	/**
 	 * Take in config line data, this should be overridden by a subclass.
 	 *
@@ -82,12 +99,12 @@ public class Section
 		throw new RuntimeException( "Cannot put into this section." );
 	}
 
-	public boolean containsSettings()
+	public boolean hasSettings()
 	{
 		return false;
 	}
 
-	public boolean containsData()
+	public boolean hasData()
 	{
 		return false;
 	}

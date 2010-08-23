@@ -33,5 +33,20 @@ package jqcadesigner.circuit.units;
  */
 public class QuantumDot
 {
+	public final double xCoord;
+	public final double yCoord;
+	public final double diameter;
+	public final double charge;
+	public final double spin;
+	public final double potential;
 
+	public QuantumDot( double x, double y, double d, double c, double s, double p )
+	{
+		xCoord = x;
+		yCoord = y;
+		diameter = d;
+		charge = c;
+		spin = s;
+		potential = p;
+	}
 }
