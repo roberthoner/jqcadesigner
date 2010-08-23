@@ -31,14 +31,10 @@ package jqcadesigner.circuit.units;
  *
  * @author Robert Honer <rhoner@cs.ucla.edu>
  */
-public class Layer
+public class SubstrateLayer extends Layer
 {
-	public final byte status;
-	public final String description;
-
-	public Layer( String d, byte s )
+	public SubstrateLayer( String description, byte status )
 	{
-		description = d;
-		status = s;
+		super( description, status );
 	}
 }

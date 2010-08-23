@@ -69,7 +69,7 @@ public class DataSection extends Section
 	}
 
 	@Override
-	public boolean containsData()
+	public boolean hasData()
 	{
 		return true;
 	}

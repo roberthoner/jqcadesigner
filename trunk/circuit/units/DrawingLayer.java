@@ -31,14 +31,10 @@ package jqcadesigner.circuit.units;
  *
  * @author Robert Honer <rhoner@cs.ucla.edu>
  */
-public class Layer
+public class DrawingLayer extends Layer
 {
-	public final byte status;
-	public final String description;
-
-	public Layer( String d, byte s )
+	public DrawingLayer( String description, byte status )
 	{
-		description = d;
-		status = s;
+		super( description, status );
 	}
 }

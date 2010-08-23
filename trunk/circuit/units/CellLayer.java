@@ -27,18 +27,21 @@
 
 package jqcadesigner.circuit.units;
 
+import java.util.ArrayList;
+
 /**
  *
  * @author Robert Honer <rhoner@cs.ucla.edu>
  */
-public class Layer
+public class CellLayer extends Layer
 {
-	public final byte status;
-	public final String description;
+	private DesignObject designObject;
+	public final ArrayList<Cell> cells;
 
-	public Layer( String d, byte s )
+	public CellLayer( String description, byte status )
 	{
-		description = d;
-		status = s;
+		super( description, status );
+
+		cells = new ArrayList<Cell>();
 	}
 }
