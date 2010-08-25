@@ -33,9 +33,12 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jqcadesigner.JQCADesigner;
+import jqcadesigner.circuit.units.Bus;
+import jqcadesigner.circuit.units.BusLayout;
 import jqcadesigner.circuit.units.Cell;
 import jqcadesigner.circuit.units.CellLayer;
 import jqcadesigner.circuit.units.Layer;
+import jqcadesigner.circuit.units.QuantumDot;
 import jqcadesigner.config.ConfigFile;
 import jqcadesigner.config.ConfigFile.ParseException;
 import jqcadesigner.config.syntaxtree.Section;
@@ -45,20 +48,20 @@ import jqcadesigner.config.syntaxtree.SettingsSection;
 public final class Circuit
 {
 	public static final double FILE_VERSION = 2.0;
-	
-	private final String _file;
-	private final Logger _log;
+	private static final Logger _log = JQCADesigner.log;
 
+	private final String _file;
 	private final ArrayList<Layer> _layers;
+	private final BusLayout _busLayout;
 
 	public Circuit( String circuitFile )
 		throws	FileNotFoundException, IOException, ParseException,
 				CircuitException
 	{
 		_file = circuitFile;
-		_log = JQCADesigner.log;
 
 		_layers = new ArrayList<Layer>();
+		_busLayout = new BusLayout();
 
 		_load();
 	}
@@ -125,7 +128,7 @@ public final class Circuit
 		for( int i = 0; i < layerCount; ++i )
 		{
 			Section crtLayerSect = layers.get( i );
-			System.out.println( "Layer " + i );
+			_log.log( Level.FINE, "Loading layer {0}", i );
 
 			if( !crtLayerSect.hasSettings() )
 			{
@@ -133,11 +136,24 @@ public final class Circuit
 				throw new CircuitException( msg );
 			}
 
-			_loadLayer( (SettingsSection)crtLayerSect );
+			Layer layer = _loadLayer( (SettingsSection)crtLayerSect );
+
+			if( layer != null )
+			{
+				_layers.add( layer );
+			}
+		}
+
+		int busLayoutCount = busLayout.size();
+		for( int i = 0; i < busLayoutCount; ++i )
+		{
+			Section crtBusLayoutSect = busLayout.get( i );
+			// TODO: Load the individual busses into _busLayout
+			//BusLayout busLayout = _loadBusLayout( crtBusLayoutSect );
 		}
 	}
 
-	private void _loadLayer( SettingsSection layerSect ) throws CircuitException
+	private Layer _loadLayer( SettingsSection layerSect ) throws CircuitException
 	{
 		if( !layerSect.containsSettings( "pszDescription", "status", "type" ) )
 		{
@@ -146,10 +162,7 @@ public final class Circuit
 		}
 
 		Layer layer = null;
-
-/*		String description	= layerSect.settings.get( "pszDescription" );
-		byte status			= Byte.parseByte( layerSect.settings.get( "status" ) );*/
-		byte type			= Byte.parseByte( layerSect.settings.get( "type" ) );
+		byte type = Byte.parseByte( layerSect.settings.get( "type" ) );
 		switch( type )
 		{
 			case 0:
@@ -168,10 +181,7 @@ public final class Circuit
 				throw new CircuitException( "Invalid layer type: " + type );
 		}
 
-		if( layer != null )
-		{
-			_layers.add( layer );
-		}
+		return layer;
 	}
 
 	/**
@@ -257,9 +267,17 @@ public final class Circuit
 		Cell.Mode mode = null;
 		Cell.Function func = null;
 
-		if( modeString.endsWith( "VERTICAL" ) )
+		if( modeString.endsWith( "NORMAL" ) )
+		{
+			mode = Cell.Mode.NORMAL;
+		}
+		else if( modeString.endsWith( "VERTICAL" ) )
 		{
 			mode = Cell.Mode.VERTICAL;
+		}
+		else if( modeString.endsWith( "CROSSOVER" ) )
+		{
+			mode = Cell.Mode.CROSSOVER;
 		}
 		else
 		{
@@ -271,16 +289,73 @@ public final class Circuit
 		{
 			func = Cell.Function.NORMAL;
 		}
+		else if( funcString.endsWith( "OUTPUT" ) )
+		{
+			func = Cell.Function.OUTPUT;
+		}
+		else if( funcString.endsWith( "INPUT" ) )
+		{
+			func = Cell.Function.INPUT;
+		}
+		else if( funcString.endsWith( "FIXED" ) )
+		{
+			func = Cell.Function.FIXED;
+		}
 		else
 		{
 			String msg = "Unknown cell function: " + funcString;
+			throw new CircuitException( msg );
 		}
 
 		Cell cell = new Cell( mode, func, clock, xCoord, yCoord, dotDiameter );
 
-		// TODO: load dots, then that's it!
+		cellSect.containsSubSections( "TYPE:CELL_DOT" );
+
+		SectionGroup dots = cellSect.subSections.get( "TYPE:CELL_DOT" );
+
+		for( int i = 3; i >= 0; --i )
+		{
+			Section dotSect = dots.get( i );
+
+			if( !dotSect.hasSettings() )
+			{
+				throw new CircuitException( "Dots must have settings." );
+			}
+
+			cell.dots[i] = _loadQuantumDot( (SettingsSection)dots.get( i ) );
+		}
+
 
 		return cell;
+	}
+
+	/**
+	 * Loads a QuantumDot from a SettingsSection
+	 *
+	 * Note: assumes it's being called by _loadCell.
+	 * @param dotSect
+	 * @return
+	 */
+	private QuantumDot _loadQuantumDot( SettingsSection dotSect ) throws CircuitException
+	{
+		if( !dotSect.containsSettings( "x", "y", "diameter", "charge", "spin", "potential" ) )
+		{
+			throw new CircuitException( "Quantum dot does not have enough settings." );
+		}
+
+		double xCoord	= Double.parseDouble( dotSect.settings.get( "x" ) );
+		double yCoord	= Double.parseDouble( dotSect.settings.get( "y" ) );
+		double diameter = Double.parseDouble( dotSect.settings.get( "diameter" ) );
+		double charge	= Double.parseDouble( dotSect.settings.get( "charge" ) );
+		double spin		= Double.parseDouble( dotSect.settings.get( "spin" ) );
+		double potential= Double.parseDouble( dotSect.settings.get( "potential" ) );
+
+		return new QuantumDot( xCoord, yCoord, diameter, charge, spin, potential );
+	}
+
+	private BusLayout _loadBusLayout( Section busSect )
+	{
+		return null;
 	}
 
 	public static class CircuitException extends Exception
