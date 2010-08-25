@@ -27,33 +27,12 @@
 
 package jqcadesigner.circuit.units;
 
+import java.util.ArrayList;
+
 /**
  *
  * @author Robert Honer <rhoner@cs.ucla.edu>
  */
-public class Cell
+public class BusLayout extends ArrayList<Bus>
 {
-	public enum Mode { VERTICAL, CROSSOVER, NORMAL }
-	public enum Function { NORMAL, OUTPUT, INPUT, FIXED }
-
-	public final Mode mode;
-	public final Function function;
-	public final byte clock;
-	public final double xCoord;
-	public final double yCoord;
-	public final double dotDiameter;
-
-	public final QuantumDot[] dots;
-
-	public Cell( Mode m, Function f, byte c, double x, double y, double dd )
-	{
-		mode = m;
-		function = f;
-		clock = c;
-		xCoord = x;
-		yCoord = y;
-		dotDiameter = dd;
-
-		dots = new QuantumDot[4];
-	}
 }
