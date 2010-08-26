@@ -27,44 +27,35 @@
 
 package jqcadesigner.engines;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.text.ParseException;
 
 import jqcadesigner.circuit.Circuit;
 import jqcadesigner.VectorTable;
+import jqcadesigner.config.ConfigFile;
 
 public final class BistableEngine extends Engine
 {
 	public BistableEngine( Circuit circuit )
+		throws FileNotFoundException, IOException, ConfigFile.ParseException
 	{
-		this( circuit, System.out, null );
+		this( circuit, null );
 	}
 	
-	public BistableEngine( Circuit circuit, PrintStream out )
+	public BistableEngine( Circuit circuit, String configFileName )
+		throws FileNotFoundException, IOException, ConfigFile.ParseException
 	{
-		this( circuit, out, null );
-	}
-	
-	public BistableEngine( Circuit circuit, PrintStream out, String configFileName )
-	{
-		super( circuit, out );
-		
-		if( configFileName != null )
-		{
-			_loadConfig( configFileName );
-		}
-	}
-
-	private void _loadConfig( String configFileName )
-	{
-		
+		super( circuit, configFileName );
 	}
 	
 	@Override
-	protected RunResults _run( VectorTable vectorTable, boolean output )
+	protected RunResults _run( VectorTable vectorTable )
 	{
 		RunResults retval = new RunResults();
 		
-
+		
 		
 		return retval;
 	}

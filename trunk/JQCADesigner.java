@@ -29,15 +29,7 @@ package jqcadesigner;
 
 import jqcadesigner.circuit.Circuit;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.Scanner;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import jqcadesigner.Options.DuplicateOptionKeyException;
-import jqcadesigner.Options.InvalidTypeException;
-import jqcadesigner.Options.ParseException;
-import jqcadesigner.config.ConfigFile;
 
 import jqcadesigner.engines.BistableEngine;
 import jqcadesigner.engines.Engine;
@@ -140,7 +132,6 @@ public class JQCADesigner
 			if( engineName.equals( "bistable" ) )
 			{
 				engine = new BistableEngine(	circuit,
-												System.out,
 												engineConfigFileName );
 			}
 			else
@@ -150,8 +141,7 @@ public class JQCADesigner
 			}
 
 			Engine.RunResults results;
-			results = engine.run( vectorTable, true );
-
+			results = engine.run( vectorTable );
 			results.printStats();
 		}
 		catch( Exception ex )

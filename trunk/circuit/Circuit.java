@@ -41,6 +41,7 @@ import jqcadesigner.circuit.units.Layer;
 import jqcadesigner.circuit.units.QuantumDot;
 import jqcadesigner.config.ConfigFile;
 import jqcadesigner.config.ConfigFile.ParseException;
+import jqcadesigner.config.syntaxtree.DataSection;
 import jqcadesigner.config.syntaxtree.Section;
 import jqcadesigner.config.syntaxtree.SectionGroup;
 import jqcadesigner.config.syntaxtree.SettingsSection;
@@ -122,7 +123,8 @@ public final class Circuit
 		}
 		
 		SectionGroup layers = designSect.subSections.get( "TYPE:QCADLayer" );
-		SectionGroup busLayout = designSect.subSections.get( "TYPE:BUS_LAYOUT" );
+		Section busLayout = designSect.subSections.get( "TYPE:BUS_LAYOUT" ).get( 0 );
+		SectionGroup buses = busLayout.subSections.get( "TYPE:BUS" );
 
 		int layerCount = layers.size();
 		for( int i = 0; i < layerCount; ++i )
@@ -144,12 +146,19 @@ public final class Circuit
 			}
 		}
 
-		int busLayoutCount = busLayout.size();
-		for( int i = 0; i < busLayoutCount; ++i )
+		int busCount = buses.size();
+		for( int i = 0; i < busCount; ++i )
 		{
-			Section crtBusLayoutSect = busLayout.get( i );
-			// TODO: Load the individual busses into _busLayout
-			//BusLayout busLayout = _loadBusLayout( crtBusLayoutSect );
+			Section crtBusSect = buses.get( i );
+
+			if( !crtBusSect.hasSettings() )
+			{
+				 String msg = "Settings missing from bus.";
+				 throw new CircuitException( msg );
+			}
+
+			Bus bus = _loadBus( (SettingsSection)crtBusSect );
+			_busLayout.add( bus );
 		}
 	}
 
@@ -193,7 +202,7 @@ public final class Circuit
 	 * @param layerSect
 	 * @return
 	 */
-	public CellLayer _loadCellLayer( SettingsSection layerSect ) throws CircuitException
+	private CellLayer _loadCellLayer( SettingsSection layerSect ) throws CircuitException
 	{
 		String description	= layerSect.settings.get( "pszDescription" );
 		byte status			= Byte.parseByte( layerSect.settings.get( "status" ) );
@@ -353,9 +362,31 @@ public final class Circuit
 		return new QuantumDot( xCoord, yCoord, diameter, charge, spin, potential );
 	}
 
-	private BusLayout _loadBusLayout( Section busSect )
+	private Bus _loadBus( SettingsSection busSect ) throws CircuitException
 	{
-		return null;
+		if( !busSect.containsSettings( "pszName", "bus_function" ) )
+		{
+			throw new CircuitException( "Bus does not have enough settings." );
+		}
+		else if( !busSect.containsSubSections( "BUS_DATA" ) )
+		{
+			throw new CircuitException( "Bus does not contain any data." );
+		}
+
+		String name = busSect.settings.get( "pszName" );
+		byte func = Byte.parseByte( busSect.settings.get( "bus_function" ) );
+
+		Section busDataSect = busSect.subSections.get( "BUS_DATA" ).get( 0 );
+
+		if( !busDataSect.hasData() )
+		{
+			throw new CircuitException( "Bus data does not contain any data." );
+		}
+
+		DataSection dataSect = (DataSection)busDataSect;
+		int[] inputCells = dataSect.data.get( 0 );
+
+		return new Bus( name, func, inputCells );
 	}
 
 	public static class CircuitException extends Exception
