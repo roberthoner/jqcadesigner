@@ -27,41 +27,55 @@
 
 package jqcadesigner.engines;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintStream;
 
 import jqcadesigner.circuit.Circuit;
 import jqcadesigner.VectorTable;
+import jqcadesigner.config.ConfigFile;
+import jqcadesigner.config.ConfigFile.ParseException;
 
 public abstract class Engine
 {
-	private Circuit _circuit;
-	private PrintStream _out;
+	protected final Circuit _circuit;
+	protected final ConfigFile _configFile;
+
+	public Engine( Circuit circuit )
+		throws FileNotFoundException, IOException, ParseException
+	{
+		this( circuit, null );
+	}
 	
-	public Engine( Circuit circuit, PrintStream out )
+	public Engine( Circuit circuit, String configFileName )
+		throws FileNotFoundException, IOException, ParseException
 	{
 		_circuit = circuit;
-		_out = System.out;
+
+		if( configFileName != null )
+		{
+			_configFile = new ConfigFile( configFileName );
+		}
+		else
+		{
+			_configFile = null;
+		}
 	}
-	
-	public Engine( Circuit circuit )
-	{
-		this( circuit, System.out );
-	}
-	
-	public RunResults run( VectorTable vectorTable, boolean output )
+
+	public RunResults run( VectorTable vectorTable )
 	{
 		RunResults retval;
 		
 		long startTime = System.currentTimeMillis();
 		
-		retval = _run( vectorTable, output );
+		retval = _run( vectorTable );
 		
 		retval.runTime = System.currentTimeMillis() - startTime;
 		
 		return retval;
 	}
 	
-	abstract protected RunResults _run( VectorTable vectorTable, boolean output );
+	abstract protected RunResults _run( VectorTable vectorTable );
 	
 	public abstract class RunResults
 	{
