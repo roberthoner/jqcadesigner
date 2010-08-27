@@ -42,6 +42,8 @@ public class QuantumDot
 
 	public QuantumDot( double x, double y, double d, double c, double s, double p )
 	{
+		assert d > 0;
+
 		xCoord = x;
 		yCoord = y;
 		diameter = d;

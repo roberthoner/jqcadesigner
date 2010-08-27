@@ -38,6 +38,8 @@ public class SettingConfigLine extends ConfigLine
 
 	public SettingConfigLine( String n, String v )
 	{
+		assert n != null && v != null;
+
 		name = n;
 		value = v;
 	}

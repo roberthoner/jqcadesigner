@@ -52,6 +52,8 @@ public class SettingsSection extends Section
 	@Override
 	public void put( ConfigLine configLine )
 	{
+		assert configLine != null;
+		
 		if( !configLine.isSetting() )
 		{
 			String msg =	"You can only put SettingConfigLines into "
@@ -65,6 +67,8 @@ public class SettingsSection extends Section
 
 	public void put( SettingConfigLine settingConfigLine )
 	{
+		assert settingConfigLine != null;
+		
 		settings.put( settingConfigLine.name, settingConfigLine.value );
 	}
 

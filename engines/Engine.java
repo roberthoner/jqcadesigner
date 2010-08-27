@@ -50,6 +50,8 @@ public abstract class Engine
 	public Engine( Circuit circuit, String configFileName )
 		throws FileNotFoundException, IOException, ParseException
 	{
+		assert(circuit != null);
+
 		_circuit = circuit;
 
 		if( configFileName != null )
@@ -82,5 +84,13 @@ public abstract class Engine
 		public long runTime;
 		
 		abstract public void printStats();
+	}
+
+	public class EngineException extends Exception
+	{
+		public EngineException( String msg )
+		{
+			super( msg );
+		}	
 	}
 }

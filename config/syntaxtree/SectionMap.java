@@ -44,6 +44,8 @@ public class SectionMap extends HashMap<String, SectionGroup>
 	 */
 	public void put( String sectionName, Section section )
 	{
+		assert sectionName != null && section != null;
+
 		SectionGroup sectionGroup = get( sectionName );
 
 		if( sectionGroup != null )
@@ -61,6 +63,8 @@ public class SectionMap extends HashMap<String, SectionGroup>
 
 	public void put( SectionTriple sectionTriple )
 	{
+		assert sectionTriple != null;
+		
 		put( sectionTriple.name, sectionTriple.section );
 	}
 

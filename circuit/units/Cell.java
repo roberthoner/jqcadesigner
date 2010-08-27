@@ -47,6 +47,8 @@ public class Cell
 
 	public Cell( Mode m, Function f, byte c, double x, double y, double dd )
 	{
+		assert m != null && f != null && dd > 0;
+		
 		mode = m;
 		function = f;
 		clock = c;

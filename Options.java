@@ -32,9 +32,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
 
-public final class Options extends HashMap<String, Object>
+public class Options extends HashMap<String, Object>
 {	
-	Options()
+	public Options()
 	{
 		super();
 	}
@@ -48,6 +48,8 @@ public final class Options extends HashMap<String, Object>
 	public void addOption( String optionKey, Object defaultValue )
 		throws DuplicateOptionKeyException, InvalidTypeException
 	{
+		assert optionKey != null;
+
 		if( containsKey( optionKey ) )
 		{
 			throw new DuplicateOptionKeyException( optionKey );
@@ -78,6 +80,8 @@ public final class Options extends HashMap<String, Object>
 
 	public void parseArgs( String[] args ) throws ParseException
 	{
+		assert args != null;
+
 		Queue<String> argsQueue = new LinkedList<String>();
 		argsQueue.addAll( Arrays.asList( args ) );
 		
@@ -96,16 +100,9 @@ public final class Options extends HashMap<String, Object>
 	private void _parseArg( String optionKey, String optionValue )
 		throws ParseException
 	{
-		if( optionKey == null )
-		{
-			throw new ParseException( "The option key can't be null." );
-		}
-
-		if( !containsKey( optionKey ) )
-		{
-			throw new ParseException( "Can't update a non-existent option." );
-		}
-
+		assert optionKey != null : "The option key can't be null";
+		assert containsKey( optionKey ) : "Can't update a non-existent option.";
+		
 		if( optionValue == null )
 		{
 			String msg = "The option '" + optionKey + "' requires an argument.";

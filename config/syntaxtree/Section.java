@@ -58,6 +58,8 @@ public class Section
 
 	public Section( SectionMap ss )
 	{
+		assert ss != null;
+		
 		subSections = ss;
 	}
 
@@ -69,6 +71,8 @@ public class Section
 	 */
 	public void addSubSection( SectionTriple sectionPair )
 	{
+		assert sectionPair != null;
+
 		subSections.put( sectionPair );
 	}
 
