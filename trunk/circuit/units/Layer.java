@@ -38,6 +38,8 @@ public class Layer
 
 	public Layer( String d, byte s )
 	{
+		assert d != null;
+		
 		description = d;
 		status = s;
 	}

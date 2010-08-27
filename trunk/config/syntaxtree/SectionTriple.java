@@ -42,6 +42,8 @@ public class SectionTriple
 
 	public SectionTriple( String n, Section s, int e )
 	{
+		assert n != null && s != null && e > 0;
+
 		name = n;
 		endingLineNum = e;
 		section = s;

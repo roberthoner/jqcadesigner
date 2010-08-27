@@ -71,6 +71,8 @@ public final class Circuit
 		throws	FileNotFoundException, IOException, ParseException,
 				CircuitException
 	{
+		assert _file != null;
+
 		ConfigFile config = new ConfigFile( _file );
 
 		if(		!config.containsKey( "VERSION" )
@@ -98,6 +100,8 @@ public final class Circuit
 	private void _checkVersion( SettingsSection versionSect )
 		throws CircuitException
 	{
+		assert versionSect != null;
+
 		String versionString = versionSect.settings.get( "qcadesigner_version" );
 		
 		double version = Double.parseDouble( versionString );
@@ -116,6 +120,8 @@ public final class Circuit
 
 	private void _loadDesign( Section designSect ) throws CircuitException
 	{
+		assert designSect != null && _layers != null;
+
 		if( !designSect.containsSubSections( "TYPE:QCADLayer", "TYPE:BUS_LAYOUT" ) )
 		{
 			String msg = "Missing sub-sections from design.";
@@ -164,6 +170,8 @@ public final class Circuit
 
 	private Layer _loadLayer( SettingsSection layerSect ) throws CircuitException
 	{
+		assert layerSect != null;
+
 		if( !layerSect.containsSettings( "pszDescription", "status", "type" ) )
 		{
 			String msg = "Missing settings in layer.";
@@ -204,6 +212,9 @@ public final class Circuit
 	 */
 	private CellLayer _loadCellLayer( SettingsSection layerSect ) throws CircuitException
 	{
+		assert layerSect != null
+			&& layerSect.containsSettings( "pszDescription", "status" );
+
 		String description	= layerSect.settings.get( "pszDescription" );
 		byte status			= Byte.parseByte( layerSect.settings.get( "status" ) );
 
@@ -247,6 +258,8 @@ public final class Circuit
 	 */
 	private Cell _loadCell( SettingsSection cellSect ) throws CircuitException
 	{
+		assert cellSect != null;
+
 		boolean valid = cellSect.containsSettings(	"cell_options.cxCell",
 													"cell_options.cyCell",
 													"cell_options.dot_diameter",
@@ -334,7 +347,6 @@ public final class Circuit
 			cell.dots[i] = _loadQuantumDot( (SettingsSection)dots.get( i ) );
 		}
 
-
 		return cell;
 	}
 
@@ -347,6 +359,8 @@ public final class Circuit
 	 */
 	private QuantumDot _loadQuantumDot( SettingsSection dotSect ) throws CircuitException
 	{
+		assert dotSect != null;
+
 		if( !dotSect.containsSettings( "x", "y", "diameter", "charge", "spin", "potential" ) )
 		{
 			throw new CircuitException( "Quantum dot does not have enough settings." );
@@ -362,8 +376,16 @@ public final class Circuit
 		return new QuantumDot( xCoord, yCoord, diameter, charge, spin, potential );
 	}
 
+	/**
+	 * Loads a Bus from a SettingsSection
+	 * @param busSect
+	 * @return
+	 * @throws jqcadesigner.circuit.Circuit.CircuitException
+	 */
 	private Bus _loadBus( SettingsSection busSect ) throws CircuitException
 	{
+		assert busSect != null;
+
 		if( !busSect.containsSettings( "pszName", "bus_function" ) )
 		{
 			throw new CircuitException( "Bus does not have enough settings." );

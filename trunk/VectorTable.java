@@ -65,13 +65,10 @@ public final class VectorTable
 	private void _load( String vectorTableFile )
 		throws FileNotFoundException, IOException, ParseException
 	{
+		assert vectorTableFile != null;
+
 		FileReader fileReader = new FileReader( vectorTableFile );
 		BufferedReader in = new BufferedReader( fileReader );
-
-		if( !in.ready() )
-		{
-			throw new IOException();
-		}
 
 		_parseFile( in );
 
@@ -81,6 +78,8 @@ public final class VectorTable
 	private void _parseFile( BufferedReader in )
 		throws IOException, ParseException
 	{
+		assert in != null;
+
 		_parseMagicString( in );
 
 		// Get the active vector
@@ -108,6 +107,8 @@ public final class VectorTable
 	private void _parseMagicString( BufferedReader in )
 		throws IOException, ParseException
 	{
+		assert in != null;
+
 		String line = in.readLine().trim();
 
 		if( !line.equals( "%%VECTOR TABLE%%" ) )
@@ -119,6 +120,8 @@ public final class VectorTable
 	private boolean[] _parseActiveVector( BufferedReader in )
 		throws IOException, ParseException
 	{
+		assert in != null;
+
 		boolean[] activeVector = _parseVector( in );
 
 		if( activeVector == null )
@@ -131,6 +134,8 @@ public final class VectorTable
 
 	private boolean[] _parseVector( BufferedReader in ) throws IOException
 	{
+		assert in != null;
+
 		String line = _getNextNonComment( in );
 
 		if( line == null )
@@ -152,6 +157,8 @@ public final class VectorTable
 
 	private String _getNextNonComment( BufferedReader in ) throws IOException
 	{
+		assert in != null;
+
 		String line = null;
 
 		while( (line = in.readLine().trim()) != null && _isComment( line ) );
@@ -161,6 +168,7 @@ public final class VectorTable
 
 	private boolean _isComment( String line )
 	{
+		assert line != null;
 		return line.charAt( 0 ) == '#';
 	}
 

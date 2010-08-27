@@ -39,6 +39,8 @@ public class Bus
 
 	public Bus( String n, byte f, int[] i )
 	{
+		assert n != null && i != null;
+		
 		name = n;
 		function = f;
 		inputCells = i;

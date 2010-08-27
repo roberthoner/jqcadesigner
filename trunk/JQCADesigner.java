@@ -34,15 +34,20 @@ import java.util.logging.Logger;
 import jqcadesigner.engines.BistableEngine;
 import jqcadesigner.engines.Engine;
 
-// TODO: make it so that Engine will accept a config file name as an option and will load the file as part of its constructor.
-// TODO: write out the Circuit class so that circuits can be loaded and create all the objects needed for it
-// TODO: add logger
+// Todos for Alpha:
+// TODO: implement bistable engine.
+// TODO: implement a class that allows easily reading engine results and output values.
 public class JQCADesigner
 {
-	public static String[] VALID_ENGINES = { "bistable" };
+	public static final String		PROGRAM_NAME = "JQCADesigner";
+	public static final String		PROGRAM_VERSION = "0.1a";
+	public static final String[][]	PROGRAM_AUTHORS = { {"Robert Honer", "rhoner@ucla.edu"} };
+	public static final String		PROGRAM_LICENSE = "BSD";
 
-	public static final Logger log;
-	public static final Options options = new Options();
+	public static final String[]	VALID_ENGINES = { "bistable" };
+
+	public static final Logger	log;
+	public static final Options	options = new Options();
 
 	static
 	{
@@ -157,6 +162,8 @@ public class JQCADesigner
 
 	public static void handleArgs( String[] args ) throws Exception
 	{
+		assert args != null && options != null;
+		
 		options.parseArgs( args );
 
 		String circuitFile = (String)options.get( "-f" );
@@ -196,8 +203,15 @@ public class JQCADesigner
 	{
 		String programName = "JQCADesigner";
 
+		System.out.printf( "%s v%s by\n", PROGRAM_NAME, PROGRAM_VERSION );
+
+		for( String[] author : PROGRAM_AUTHORS )
+		{
+			System.out.printf( "  %s <%s>\n", author[0], author[1] );
+		}
+
 		System.out.println(
-				"Usage: "+programName+" -f circuit_file -e engine_name "
+				"\nUsage: "+programName+" -f circuit_file -e engine_name "
 				+ "[-c engine_config_file] [-n number_of_simulations] "
 				+ "[-t radial_tolerance] [-vt vector_table_file]"
 			);

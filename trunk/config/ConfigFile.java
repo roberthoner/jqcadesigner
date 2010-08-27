@@ -59,6 +59,8 @@ public class ConfigFile extends SectionMap
 	private void _parseFile( PeekingBufferedReader in )
 		throws IOException, ParseException
 	{
+		assert in != null;
+
 		int currentLineNum = 1;
 		
 		while( in.peekLine() != null )
@@ -75,6 +77,9 @@ public class ConfigFile extends SectionMap
 											int currentLineNum )
 		throws IOException, ParseException
 	{
+		assert in != null;
+		assert currentLineNum > 0;
+
 		String sectionName = _parseSectionOpenTag( in, currentLineNum );
 
 		// Represents all the section that we are parsing.
@@ -161,6 +166,8 @@ public class ConfigFile extends SectionMap
 	private String _parseSectionOpenTag( PeekingBufferedReader in, int lineNum )
 		throws IOException, ParseException
 	{
+		assert in != null && lineNum > 0;
+
 		String line = in.readLine();
 
 		if( line == null )
@@ -197,6 +204,8 @@ public class ConfigFile extends SectionMap
 										int lineNum )
 		throws IOException, ParseException
 	{
+		assert in != null && sectionName != null && lineNum > 0;
+
 		String line = in.readLine();
 
 		if( line == null )
@@ -222,6 +231,8 @@ public class ConfigFile extends SectionMap
  	private ConfigLine _parseConfigLine( PeekingBufferedReader in, int lineNum )
 		throws IOException, ParseException
 	{
+		assert in != null && lineNum > 0;
+
 		String line = in.peekLine();
 
 		if( line == null )
@@ -254,6 +265,8 @@ public class ConfigFile extends SectionMap
 													int lineNum )
 		throws IOException, ParseException
 	{
+		assert in != null && lineNum > 0;
+
 		String line = in.readLine();
 
 		if( line == null )
@@ -289,6 +302,8 @@ public class ConfigFile extends SectionMap
 														int lineNum )
 		throws IOException, ParseException
 	{
+		assert in != null && lineNum > 0;
+
 		String line = in.readLine();
 
 		if( line == null )

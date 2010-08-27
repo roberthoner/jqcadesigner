@@ -37,6 +37,8 @@ public class DataConfigLine extends ConfigLine
 
 	public DataConfigLine( int[] d )
 	{
+		assert d != null;
+		
 		data = d;
 	}
 
