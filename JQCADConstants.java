@@ -25,65 +25,26 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package jqcadesigner.circuit.units;
-
-import jqcadesigner.JQCADConstants;
+package jqcadesigner;
 
 /**
  *
  * @author Robert Honer <rhoner@cs.ucla.edu>
  */
-public abstract class Cell
+public class JQCADConstants
 {
-	public static enum Mode { VERTICAL, CROSSOVER, NORMAL }
-	public static enum Function { NORMAL, OUTPUT, INPUT, FIXED }
-	
-	/**
-	 * Allows additional information to be added to the cell.
-	 * 
-	 * If a simulation engine wants to be able to associate information specific
-	 * to itself in a cell, it can extend CellInfo and place whatever information
-	 * it wants into this cell's info field.
-	 */
-	public static abstract class CellInfo {}
+	public static final String		PROGRAM_NAME = "JQCADesigner";
+	public static final String		PROGRAM_VERSION = "0.1a";
+	public static final String[][]	PROGRAM_AUTHORS = { {"Robert Honer", "rhoner@ucla.edu"} };
+	public static final String		PROGRAM_LICENSE = "BSD";
 
-	public final Mode mode;
-	public final Function function;
-	public final byte clock;
-	public final double xCoord;
-	public final double yCoord;
-	public final double dotDiameter;
-	public final int layerNum;
+	// Numerical constants
+	public static final double QCHARGE						= 1.602176432e-19;
+	public static final double QCHARGE_SQRD_OVER_FOUR		= 6.417423538e-39;
+	public static final double QCHARGE_HALVED				= 0.801088231e-19;
+	public static final double ONE_OVER_QCHARGE				= 6.241509745e18;
 
-	/**
-	 * Additional information can be added here by simulation engines.
-	 */
-	public CellInfo info;
-
-	public final QuantumDot[] dots;
-
-	public Cell( Mode m, Function f, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
-	{
-		assert m != null && f != null && dd > 0 && d != null && d.length == 4;
-		assert d[0] != null && d[1] != null && d[2] != null && d[3] != null;
-		
-		mode = m;
-		function = f;
-		clock = c;
-		xCoord = x;
-		yCoord = y;
-		dotDiameter = dd;
-		layerNum = ln;
-
-		dots = d;
-	}
-
-	public double calcPolarization()
-	{
-		double p	= ((dots[0].charge + dots[2].charge)
-					- (dots[1].charge + dots[3].charge))
-					* JQCADConstants.ONE_OVER_FOUR_HALF_QCHARGE;
-
-		return p;
-	}
+	public static final double EPSILON						= 8.8541878e-12;
+	public static final double FOUR_PI_EPSILON				= 1.112650056e-10;
+	public static final double ONE_OVER_FOUR_HALF_QCHARGE	= 3.12109e18;
 }

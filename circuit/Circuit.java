@@ -33,11 +33,16 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import jqcadesigner.JQCADesigner;
+import jqcadesigner.VectorTable;
 import jqcadesigner.circuit.units.Bus;
 import jqcadesigner.circuit.units.BusLayout;
 import jqcadesigner.circuit.units.Cell;
 import jqcadesigner.circuit.units.CellLayer;
+import jqcadesigner.circuit.units.FixedCell;
+import jqcadesigner.circuit.units.InputCell;
 import jqcadesigner.circuit.units.Layer;
+import jqcadesigner.circuit.units.NormalCell;
+import jqcadesigner.circuit.units.OutputCell;
 import jqcadesigner.circuit.units.QuantumDot;
 import jqcadesigner.config.ConfigFile;
 import jqcadesigner.config.ConfigFile.ParseException;
@@ -49,11 +54,22 @@ import jqcadesigner.config.syntaxtree.SettingsSection;
 public final class Circuit
 {
 	public static final double FILE_VERSION = 2.0;
+
 	private static final Logger _log = JQCADesigner.log;
 
-	private final String _file;
-	private final ArrayList<Layer> _layers;
-	private final BusLayout _busLayout;
+	private final String				_file;
+	private final ArrayList<Layer>		_layers;
+	private final ArrayList<InputCell>	_inputCells;
+	private final ArrayList<OutputCell>	_outputCells;
+	private final ArrayList<FixedCell>	_fixedCells;
+	private final BusLayout				_busLayout;
+
+	/**
+	 * Stores the current layer number when loading from the ConfigFile.
+	 */
+	private int _crtLayerNum;
+
+	private int _cellCount;
 
 	public Circuit( String circuitFile )
 		throws	FileNotFoundException, IOException, ParseException,
@@ -62,11 +78,66 @@ public final class Circuit
 		_file = circuitFile;
 
 		_layers = new ArrayList<Layer>();
+		_inputCells = new ArrayList<InputCell>();
+		_outputCells = new ArrayList<OutputCell>();
+		_fixedCells = new ArrayList<FixedCell>();
 		_busLayout = new BusLayout();
 
 		_load();
 	}
-	
+
+	public int getCellCount()
+	{
+		return _cellCount;
+	}
+
+	public Cell[][] getCellMatrix()
+	{
+		Cell[][] matrix = new Cell[ _layers.size() ][];
+
+		int layerCount = _layers.size();
+		for( int i = 0; i < layerCount; ++i )
+		{
+			Layer crtLayer = _layers.get( i );
+			
+			if( crtLayer.hasCells() )
+			{
+				ArrayList<Cell> cells = ((CellLayer)crtLayer).cells;
+				matrix[i] = cells.toArray( new Cell[ cells.size() ] );
+			}
+		}
+		
+		return matrix;
+	}
+
+	public InputCell[] getInputCells()
+	{
+		return (InputCell[])_inputCells.toArray();
+	}
+
+	public void updateInputs( VectorTable vectorTable ) throws CircuitException
+	{
+		if( vectorTable == null || vectorTable.inputs.length == 0 )
+		{
+			throw new CircuitException( "Can't use an empty vector table." );
+		}
+
+		if( vectorTable.inputs[0].length != _inputCells.size() )
+		{
+			throw new CircuitException( "Invalid vector table. Incorrect dimensions." );
+		}
+
+		for( int i = 0; i < vectorTable.active.length; ++i )
+		{
+			_inputCells.get( i ).active = vectorTable.active[i];
+		}
+	}
+
+	public OutputCell[] getOutputCells()
+	{
+		return (OutputCell[])_outputCells.toArray();
+	}
+
 	private void _load()
 		throws	FileNotFoundException, IOException, ParseException,
 				CircuitException
@@ -135,6 +206,8 @@ public final class Circuit
 		int layerCount = layers.size();
 		for( int i = 0; i < layerCount; ++i )
 		{
+			_crtLayerNum = i;
+			
 			Section crtLayerSect = layers.get( i );
 			_log.log( Level.FINE, "Loading layer {0}", i );
 
@@ -230,9 +303,7 @@ public final class Circuit
 
 		int cellCount = cells.size();
 
-		// Counting backwards to try to get a little extra performance boost.
-		// There could be a lot of cells here!
-		for( int i = cellCount - 1; i >= 0; --i )
+		for( int i = 0; i < cellCount; ++i )
 		{
 			Section cellSect = cells.get( i );
 
@@ -260,6 +331,8 @@ public final class Circuit
 	{
 		assert cellSect != null;
 
+		Cell cell;
+
 		boolean valid = cellSect.containsSettings(	"cell_options.cxCell",
 													"cell_options.cyCell",
 													"cell_options.dot_diameter",
@@ -269,6 +342,26 @@ public final class Circuit
 		if( !valid )
 		{
 			throw new CircuitException( "Cell does not contain enough settings." );
+		}
+
+		if( !cellSect.containsSubSections( "TYPE:CELL_DOT" ) )
+		{
+			throw new CircuitException( "Cell does not contain any quantum dots." );
+		}
+
+		// Load the QuantumDots.
+		QuantumDot[] qDots = new QuantumDot[4];
+		SectionGroup dotSects = cellSect.subSections.get( "TYPE:CELL_DOT" );
+		for( int i = 0; i < 4; ++i )
+		{
+			Section dotSect = dotSects.get( i );
+
+			if( !dotSect.hasSettings() )
+			{
+				throw new CircuitException( "Dots must have settings." );
+			}
+
+			qDots[i] = _loadQuantumDot( (SettingsSection)dotSects.get( i ) );
 		}
 
 		double xCoord =
@@ -309,19 +402,22 @@ public final class Circuit
 
 		if( funcString.endsWith( "NORMAL" ) )
 		{
-			func = Cell.Function.NORMAL;
+			cell = new NormalCell( mode, clock, xCoord, yCoord, dotDiameter, _crtLayerNum, qDots );
 		}
 		else if( funcString.endsWith( "OUTPUT" ) )
 		{
-			func = Cell.Function.OUTPUT;
+			cell = new OutputCell( mode, clock, xCoord, yCoord, dotDiameter, _crtLayerNum, qDots );
+			_outputCells.add( (OutputCell)cell );
 		}
 		else if( funcString.endsWith( "INPUT" ) )
 		{
-			func = Cell.Function.INPUT;
+			cell = new InputCell( mode, clock, xCoord, yCoord, dotDiameter, _crtLayerNum, qDots );
+			_inputCells.add( (InputCell)cell );
 		}
 		else if( funcString.endsWith( "FIXED" ) )
 		{
-			func = Cell.Function.FIXED;
+			cell = new FixedCell( mode, clock, xCoord, yCoord, dotDiameter, _crtLayerNum, qDots );
+			_fixedCells.add( (FixedCell)cell );
 		}
 		else
 		{
@@ -329,24 +425,7 @@ public final class Circuit
 			throw new CircuitException( msg );
 		}
 
-		Cell cell = new Cell( mode, func, clock, xCoord, yCoord, dotDiameter );
-
-		cellSect.containsSubSections( "TYPE:CELL_DOT" );
-
-		SectionGroup dots = cellSect.subSections.get( "TYPE:CELL_DOT" );
-
-		for( int i = 3; i >= 0; --i )
-		{
-			Section dotSect = dots.get( i );
-
-			if( !dotSect.hasSettings() )
-			{
-				throw new CircuitException( "Dots must have settings." );
-			}
-
-			cell.dots[i] = _loadQuantumDot( (SettingsSection)dots.get( i ) );
-		}
-
+		++_cellCount;
 		return cell;
 	}
 
@@ -360,7 +439,7 @@ public final class Circuit
 	private QuantumDot _loadQuantumDot( SettingsSection dotSect ) throws CircuitException
 	{
 		assert dotSect != null;
-
+		
 		if( !dotSect.containsSettings( "x", "y", "diameter", "charge", "spin", "potential" ) )
 		{
 			throw new CircuitException( "Quantum dot does not have enough settings." );

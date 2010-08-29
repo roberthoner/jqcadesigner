@@ -27,63 +27,24 @@
 
 package jqcadesigner.circuit.units;
 
-import jqcadesigner.JQCADConstants;
-
 /**
  *
  * @author Robert Honer <rhoner@cs.ucla.edu>
  */
-public abstract class Cell
+public class FixedCell extends Cell
 {
-	public static enum Mode { VERTICAL, CROSSOVER, NORMAL }
-	public static enum Function { NORMAL, OUTPUT, INPUT, FIXED }
-	
-	/**
-	 * Allows additional information to be added to the cell.
-	 * 
-	 * If a simulation engine wants to be able to associate information specific
-	 * to itself in a cell, it can extend CellInfo and place whatever information
-	 * it wants into this cell's info field.
-	 */
-	public static abstract class CellInfo {}
+	public final double polarization;
 
-	public final Mode mode;
-	public final Function function;
-	public final byte clock;
-	public final double xCoord;
-	public final double yCoord;
-	public final double dotDiameter;
-	public final int layerNum;
-
-	/**
-	 * Additional information can be added here by simulation engines.
-	 */
-	public CellInfo info;
-
-	public final QuantumDot[] dots;
-
-	public Cell( Mode m, Function f, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
+	public FixedCell( Mode m, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
 	{
-		assert m != null && f != null && dd > 0 && d != null && d.length == 4;
-		assert d[0] != null && d[1] != null && d[2] != null && d[3] != null;
-		
-		mode = m;
-		function = f;
-		clock = c;
-		xCoord = x;
-		yCoord = y;
-		dotDiameter = dd;
-		layerNum = ln;
+		super( m, Function.FIXED, c, x, y, dd, ln, d );
 
-		dots = d;
+		polarization = super.calcPolarization();
 	}
 
+	@Override
 	public double calcPolarization()
 	{
-		double p	= ((dots[0].charge + dots[2].charge)
-					- (dots[1].charge + dots[3].charge))
-					* JQCADConstants.ONE_OVER_FOUR_HALF_QCHARGE;
-
-		return p;
+		return polarization;
 	}
 }

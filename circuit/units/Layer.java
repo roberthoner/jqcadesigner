@@ -43,4 +43,9 @@ public class Layer
 		description = d;
 		status = s;
 	}
+
+	public boolean hasCells()
+	{
+		return false;
+	}
 }

@@ -39,30 +39,27 @@ import java.util.ArrayList;
  */
 public final class VectorTable
 {
-	private boolean[] active;
-	private boolean[][] inputs;
+	public final boolean[] active;
+	public final boolean[][] inputs;
 
 	public VectorTable( String vectorTableFile )
 		throws FileNotFoundException, IOException, ParseException
 	{
-		_load( vectorTableFile );
+		ArrayList<boolean[]> vectors = _load( vectorTableFile );
+
+		// This first vector should be the active vector.
+		active = vectors.remove( 0 );
+
+		// The rest of them are the input vectors.
+		int vectorCount = vectors.size();
+		inputs = new boolean[ vectorCount ][];
+		for( int i = 0; i < vectorCount; ++i )
+		{
+			inputs[i] = vectors.get( i );
+		}
 	}
 
-	public void setInputs( boolean[][] inputs ) throws Exception
-	{
-		if( inputs == null )
-		{
-			throw new Exception( "Can't set values to null." );
-		}
-		else if( inputs[0].length < active.length )
-		{
-			throw new Exception( "Not enough input vectors." );
-		}
-
-		this.inputs = inputs;
-	}
-
-	private void _load( String vectorTableFile )
+	private ArrayList<boolean[]> _load( String vectorTableFile )
 		throws FileNotFoundException, IOException, ParseException
 	{
 		assert vectorTableFile != null;
@@ -70,25 +67,29 @@ public final class VectorTable
 		FileReader fileReader = new FileReader( vectorTableFile );
 		BufferedReader in = new BufferedReader( fileReader );
 
-		_parseFile( in );
+		
+		ArrayList<boolean[]> vectors = _parseFile( in );
 
 		in.close();
+
+		return vectors;
 	}
 
-	private void _parseFile( BufferedReader in )
+	private ArrayList<boolean[]> _parseFile( BufferedReader in )
 		throws IOException, ParseException
 	{
 		assert in != null;
 
 		_parseMagicString( in );
 
+		// This will hold the vectors as we find them.
+		// The first of which will be the active vector.
+		ArrayList<boolean[]> vectors = new ArrayList<boolean[]>();
+
 		// Get the active vector
 		// This tells us which inputs are activated.
 		boolean[] activeVector = _parseActiveVector( in );
-		active = activeVector;
-
-		// This will hold the input vectors as we find them.
-		ArrayList<boolean[]> vectors = new ArrayList<boolean[]>();
+		vectors.add( activeVector );
 
 		boolean[] currentInputVector;
 		while( (currentInputVector = _parseVector( in )) != null )
@@ -98,10 +99,10 @@ public final class VectorTable
 				throw new ParseException( "There must be exactly one vector for every input." );
 			}
 
-			vectors.add(  currentInputVector );
+			vectors.add( currentInputVector );
 		}
 		
-		vectors.toArray( inputs );
+		return vectors;
 	}
 
 	private void _parseMagicString( BufferedReader in )
@@ -137,7 +138,7 @@ public final class VectorTable
 		assert in != null;
 
 		String line = _getNextNonComment( in );
-
+		
 		if( line == null )
 		{
 			return null;
@@ -151,7 +152,7 @@ public final class VectorTable
 		{
 			vector[i] = (line.charAt( i ) == '1' ? true : false);
 		}
-
+		
 		return vector;
 	}
 
@@ -161,15 +162,15 @@ public final class VectorTable
 
 		String line = null;
 
-		while( (line = in.readLine().trim()) != null && _isComment( line ) );
-
+		while( (line = in.readLine()) != null && _isComment( line ) );
+		
 		return line;
 	}
 
 	private boolean _isComment( String line )
 	{
 		assert line != null;
-		return line.charAt( 0 ) == '#';
+		return line.trim().charAt( 0 ) == '#';
 	}
 
 	public static class ParseException extends Exception
