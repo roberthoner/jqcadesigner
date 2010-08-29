@@ -44,4 +44,10 @@ public class CellLayer extends Layer
 
 		cells = new ArrayList<Cell>();
 	}
+
+	@Override
+	public boolean hasCells()
+	{
+		return true;
+	}
 }

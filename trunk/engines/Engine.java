@@ -30,9 +30,12 @@ package jqcadesigner.engines;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.logging.Logger;
+import jqcadesigner.JQCADesigner;
 
 import jqcadesigner.circuit.Circuit;
 import jqcadesigner.VectorTable;
+import jqcadesigner.circuit.Circuit.CircuitException;
 import jqcadesigner.config.ConfigFile;
 import jqcadesigner.config.ConfigFile.ParseException;
 
@@ -40,6 +43,7 @@ public abstract class Engine
 {
 	protected final Circuit _circuit;
 	protected final ConfigFile _configFile;
+	protected static final Logger _log = JQCADesigner.log;
 
 	public Engine( Circuit circuit )
 		throws FileNotFoundException, IOException, ParseException
@@ -64,23 +68,34 @@ public abstract class Engine
 		}
 	}
 
-	public RunResults run( VectorTable vectorTable )
+	public RunResults run( VectorTable vectorTable ) throws CircuitException
 	{
 		RunResults retval;
-		
-		long startTime = System.currentTimeMillis();
-		
+
+		// Initialize the engine.
+		long initTime = System.currentTimeMillis();
+		_circuit.updateInputs( vectorTable );
+		_init();
+		initTime = System.currentTimeMillis() - initTime;
+
+		// Run the engine.
+		long runTime = System.currentTimeMillis();
 		retval = _run( vectorTable );
-		
-		retval.runTime = System.currentTimeMillis() - startTime;
-		
+		runTime = System.currentTimeMillis() - runTime;
+
+		// Update the results.
+		retval.initTime = initTime;
+		retval.runTime = runTime;
+
 		return retval;
 	}
-	
+
+	abstract protected void _init();
 	abstract protected RunResults _run( VectorTable vectorTable );
 	
 	public abstract class RunResults
 	{
+		public long initTime;
 		public long runTime;
 		
 		abstract public void printStats();

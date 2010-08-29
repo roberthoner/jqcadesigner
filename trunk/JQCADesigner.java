@@ -27,6 +27,7 @@
 
 package jqcadesigner;
 
+import java.util.logging.Level;
 import jqcadesigner.circuit.Circuit;
 import java.io.File;
 import java.util.logging.Logger;
@@ -37,12 +38,14 @@ import jqcadesigner.engines.Engine;
 // Todos for Alpha:
 // TODO: implement bistable engine.
 // TODO: implement a class that allows easily reading engine results and output values.
+// TODO: make it so if no vector table file is specified, it automatically loads an exhaustive vector table.
 public class JQCADesigner
 {
 	public static final String		PROGRAM_NAME = "JQCADesigner";
 	public static final String		PROGRAM_VERSION = "0.1a";
 	public static final String[][]	PROGRAM_AUTHORS = { {"Robert Honer", "rhoner@ucla.edu"} };
 	public static final String		PROGRAM_LICENSE = "BSD";
+
 
 	public static final String[]	VALID_ENGINES = { "bistable" };
 
@@ -119,14 +122,20 @@ public class JQCADesigner
 		String circuitFile			= (String)options.get( "-f" );
 		String vectorTableFile		= (String)options.get( "--vt" );
 		String engineName			= (String)options.get( "-e" );
-		String engineConfigFileName	= (String)options.get( "-c" );
+		String engineConfigFileName	= ((String)options.get( "-c" )).equals( "" )
+									? null : (String)options.get( "-c" );
+
+
 
 		try
 		{
+			log.log( Level.INFO, "Loading circuit from <{0}>.", circuitFile );
+
 			circuit = new Circuit( circuitFile );
 
 			if( !vectorTableFile.equals( "" ) )
 			{
+				log.log( Level.INFO, "Loading vector table from <{0}>.", vectorTableFile );
 				vectorTable = new VectorTable( vectorTableFile );
 			}
 			else
@@ -141,7 +150,7 @@ public class JQCADesigner
 			}
 			else
 			{
-				System.err.println( "Invalid engine name: " + engineName );
+				log.log( Level.SEVERE, "Invalid engine name: {0}", engineName );
 				System.exit( 3 );
 			}
 
@@ -151,7 +160,8 @@ public class JQCADesigner
 		}
 		catch( Exception ex )
 		{
-			System.err.println( ex.getMessage() );
+			log.severe( ex.toString() );
+			ex.printStackTrace();
 		}
 	}
 
