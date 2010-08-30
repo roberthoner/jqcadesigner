@@ -50,12 +50,24 @@ public final class VectorTable
 		// This first vector should be the active vector.
 		active = vectors.remove( 0 );
 
-		// The rest of them are the input vectors.
-		int vectorCount = vectors.size();
-		inputs = new boolean[ vectorCount ][];
-		for( int i = 0; i < vectorCount; ++i )
+		// The rest of the vectors contain the input vectors.
+		// These vectors need to be split up and grouped by input. Currently,
+		// they are grouped by time. The first vector contains the values of all
+		// the inputs at time 0, the second contains the values of all the inputs
+		// at time 1, and so on.
+		final int inputCount = active.length;	// The number of input vectors.
+		final int valueCount = vectors.size();	// The number of values per input vector.
+
+		inputs = new boolean[ inputCount ][ valueCount ];
+		for( int i = 0; i < valueCount; ++i )
 		{
-			inputs[i] = vectors.get( i );
+			// Contains the values for all the inputs at time i.
+			boolean[] crtVector = vectors.get( i );
+
+			for( int j = 0; j < inputCount; ++j )
+			{
+				inputs[j][i] = crtVector[j];
+			}
 		}
 	}
 

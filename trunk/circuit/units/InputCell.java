@@ -27,12 +27,16 @@
 
 package jqcadesigner.circuit.units;
 
+import jqcadesigner.circuit.DataTrace;
+
 /**
  *
  * @author Robert Honer <rhoner@cs.ucla.edu>
  */
 public class InputCell extends Cell
 {
+	private final DataTrace _inputValues;
+
 	/**
 	 * Whether or not this input cell is active. If not, it should function as a normal cell.
 	 */
@@ -42,6 +46,88 @@ public class InputCell extends Cell
 	{
 		super( m, Function.INPUT, c, x, y, dd, ln, d );
 
+		_inputValues = new DataTrace( "Input" );
 		active = true;
+	}
+
+	public void setValues( boolean[] values, int granularity )
+	{
+		if( values == null )
+		{
+			String msg = "InputCell values can't be null.";
+			throw new IllegalArgumentException( msg );
+		}
+
+		final int valueCount = values.length;
+
+		if( granularity < valueCount )
+		{
+			String msg = "Granularity must be at least equal to the number of values.";
+			throw new IllegalArgumentException( msg );
+		}
+
+		final int ticksPerValue = granularity / valueCount;
+
+		// The remainder of the above integer division.
+		final int excessTicks = granularity - (ticksPerValue * valueCount);
+		
+		// Says how often an extra tick should be inserted, so as to make up for
+		// the excess ticks that don't fit evenly into the granularity.
+		final int extraInsertFreq = excessTicks > 0 ? valueCount / excessTicks
+									: 1;
+
+		_inputValues.setSize( granularity );
+
+		for( int i = 0; i < valueCount; ++i )
+		{
+			double crtValue = values[i] ? 1.0 : -0.1;
+
+			for( int j = ticksPerValue; j > 0; --j )
+			{
+				_inputValues.addNext( crtValue );
+			}
+
+			if( i % extraInsertFreq == 0 )
+			{
+				// Add an extra here to make sure that we completely fill up the
+				// DataTrace.
+				_inputValues.addNext( crtValue );
+			}
+		}
+	}
+
+	@Override
+	public void reset()
+	{
+		_inputValues.resetIndex();
+	}
+
+	/**
+	 * Advance the cell's, returning it's new polarization.
+	 *
+	 * @return The cell's new polarization.
+	 */
+	@Override
+	public double tick()
+	{
+		double retval;
+
+		if( active )
+		{
+			if( !_inputValues.hasNext() )
+			{
+				_inputValues.resetIndex();
+			}
+
+			retval = _inputValues.getNext();
+
+			setPolarization( retval );
+		}
+		else
+		{
+			retval = super.tick();
+		}
+
+		return retval;
 	}
 }

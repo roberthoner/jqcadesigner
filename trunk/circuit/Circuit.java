@@ -38,6 +38,7 @@ import jqcadesigner.circuit.units.Bus;
 import jqcadesigner.circuit.units.BusLayout;
 import jqcadesigner.circuit.units.Cell;
 import jqcadesigner.circuit.units.CellLayer;
+import jqcadesigner.circuit.units.Clock;
 import jqcadesigner.circuit.units.FixedCell;
 import jqcadesigner.circuit.units.InputCell;
 import jqcadesigner.circuit.units.Layer;
@@ -63,6 +64,7 @@ public final class Circuit
 	private final ArrayList<OutputCell>	_outputCells;
 	private final ArrayList<FixedCell>	_fixedCells;
 	private final BusLayout				_busLayout;
+	private final Clock[]				_clocks;
 
 	/**
 	 * Stores the current layer number when loading from the ConfigFile.
@@ -77,11 +79,12 @@ public final class Circuit
 	{
 		_file = circuitFile;
 
-		_layers = new ArrayList<Layer>();
-		_inputCells = new ArrayList<InputCell>();
-		_outputCells = new ArrayList<OutputCell>();
-		_fixedCells = new ArrayList<FixedCell>();
-		_busLayout = new BusLayout();
+		_layers			= new ArrayList<Layer>();
+		_inputCells		= new ArrayList<InputCell>();
+		_outputCells	= new ArrayList<OutputCell>();
+		_fixedCells		= new ArrayList<FixedCell>();
+		_busLayout		= new BusLayout();
+		_clocks			= new Clock[4];
 
 		_load();
 	}
@@ -115,27 +118,62 @@ public final class Circuit
 		return (InputCell[])_inputCells.toArray();
 	}
 
-	public void updateInputs( VectorTable vectorTable ) throws CircuitException
+	/**
+	 *
+	 * @param vectorTable
+	 * @param granularity
+	 */
+	public void updateInputs( VectorTable vectorTable, int granularity )
 	{
 		if( vectorTable == null || vectorTable.inputs.length == 0 )
 		{
-			throw new CircuitException( "Can't use an empty vector table." );
+			String msg = "Can't use an empty vector table.";
+			throw new IllegalArgumentException( msg );
 		}
 
-		if( vectorTable.inputs[0].length != _inputCells.size() )
+		if( vectorTable.inputs.length != _inputCells.size() )
 		{
-			throw new CircuitException( "Invalid vector table. Incorrect dimensions." );
+			String msg = "Invalid vector table. Incorrect dimensions.";
+			throw new IllegalArgumentException( msg );
 		}
 
 		for( int i = 0; i < vectorTable.active.length; ++i )
 		{
 			_inputCells.get( i ).active = vectorTable.active[i];
+
+			_inputCells.get( i ).setValues( vectorTable.inputs[i], granularity );
 		}
 	}
 
 	public OutputCell[] getOutputCells()
 	{
 		return (OutputCell[])_outputCells.toArray();
+	}
+
+	public Clock getClock( int clockNum )
+	{
+		if( clockNum < 0 || clockNum > 3 )
+		{
+			throw new IllegalArgumentException( "Clock number must be between 0 and 3 " );
+		}
+
+		return _clocks[ clockNum ];
+	}
+
+	public Clock[] getClocks()
+	{
+		Clock[] retval = { _clocks[0], _clocks[1], _clocks[2], _clocks[3] };
+
+		return retval;
+	}
+
+	public void updateClocks(	int cycles, int granularity, double cLow,
+								double cHigh, double ampFactor, double clockShift )
+	{
+		for( int i = 0; i < 4; ++i )
+		{
+			_clocks[i] = new Clock( i, cycles, granularity, cLow, cHigh, ampFactor, clockShift );
+		}
 	}
 
 	private void _load()

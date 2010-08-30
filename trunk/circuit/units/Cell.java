@@ -37,15 +37,6 @@ public abstract class Cell
 {
 	public static enum Mode { VERTICAL, CROSSOVER, NORMAL }
 	public static enum Function { NORMAL, OUTPUT, INPUT, FIXED }
-	
-	/**
-	 * Allows additional information to be added to the cell.
-	 * 
-	 * If a simulation engine wants to be able to associate information specific
-	 * to itself in a cell, it can extend CellInfo and place whatever information
-	 * it wants into this cell's info field.
-	 */
-	public static abstract class CellInfo {}
 
 	public final Mode mode;
 	public final Function function;
@@ -54,13 +45,20 @@ public abstract class Cell
 	public final double yCoord;
 	public final double dotDiameter;
 	public final int layerNum;
-
-	/**
-	 * Additional information can be added here by simulation engines.
-	 */
-	public CellInfo info;
-
 	public final QuantumDot[] dots;
+
+	private double _polarization;
+	
+	/**
+	 * Whether or not the dots should be updated when setPolarization is called.
+	 * 
+	 * If false, the QuantumDots will not be updated when setPolarization is
+	 * called. This can be used to improve performance when no QuantumDot
+	 * specific information is needed.
+	 */
+	private boolean _updateDots;
+
+	private TickHandler _tickHandler;
 
 	public Cell( Mode m, Function f, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
 	{
@@ -76,14 +74,92 @@ public abstract class Cell
 		layerNum = ln;
 
 		dots = d;
+		
+		_polarization = _calcPolarization();
+
+		_updateDots = false;
 	}
 
-	public double calcPolarization()
+	public void setUpdateDots( boolean value )
+	{
+		_updateDots = value;
+	}
+
+	public final void setTickHandler( TickHandler tickHandler )
+	{
+		_tickHandler = tickHandler;
+	}
+
+	public void setPolarization( double polarization )
+	{
+		if( polarization < -1.0 || polarization > 1.0 )
+		{
+			String msg = "A cells polarization must be between -1.0 and 1.0.";
+			throw new IllegalArgumentException( msg );
+		}
+
+		if( _updateDots )
+		{
+			// TODO: Make it modify the actual dots.
+		}
+
+		_polarization = polarization;
+	}
+
+	public double getPolarization()
+	{
+		return _polarization;
+	}
+
+	private double _calcPolarization()
 	{
 		double p	= ((dots[0].charge + dots[2].charge)
 					- (dots[1].charge + dots[3].charge))
 					* JQCADConstants.ONE_OVER_FOUR_HALF_QCHARGE;
 
 		return p;
+	}
+
+	public double tick()
+	{
+		if( _tickHandler == null )
+		{
+			String msg = "This cell doesn't have a tick handler set.";
+			throw new RuntimeException( msg );
+		}
+
+		double newPol = _tickHandler.tick();
+
+		setPolarization( newPol );
+
+		return newPol;
+	}
+
+	/**
+	 * Reset the cell.
+	 */
+	public void reset()
+	{
+		// We don't need to do anything for a normal cell... at least I don't think :)
+	}
+
+	/**
+	 *
+	 */
+	public static abstract class TickHandler
+	{
+		protected final Cell _cell;
+
+		public TickHandler( Cell cell )
+		{
+			_cell = cell;
+		}
+
+		/**
+		 * Advance the cells polarization.
+		 *
+		 * @return
+		 */
+		public abstract double tick();
 	}
 }

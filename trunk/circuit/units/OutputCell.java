@@ -27,14 +27,54 @@
 
 package jqcadesigner.circuit.units;
 
+import jqcadesigner.circuit.DataTrace;
+
 /**
  *
  * @author Robert Honer <rhoner@cs.ucla.edu>
  */
 public class OutputCell extends Cell
 {
+	/**
+	 * Stores the current and previous polarizations for this cell.
+	 */
+	private final DataTrace _valueCache;
+
 	public OutputCell( Mode m, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
 	{
 		super( m, Function.OUTPUT, c, x, y, dd, ln, d );
+
+		_valueCache = new DataTrace( "Output" );
+	}
+	
+	public void setValueCacheSize( int size )
+	{
+		_valueCache.setSize( size );
+	}
+
+	/**
+	 * Sets the cell's polarization and adds the value to its cache.
+	 * @param polarization
+	 */
+	@Override
+	public void setPolarization( double polarization )
+	{
+		super.setPolarization( polarization );
+
+		if( !_valueCache.hasNext() )
+		{
+			String msg	= "Output cell " + _valueCache.getName()
+						+ " is out of cache space.";
+
+			throw new RuntimeException( msg );
+		}
+
+		_valueCache.addNext( polarization );
+	}
+
+	@Override
+	public void reset()
+	{
+		_valueCache.resetIndex();
 	}
 }

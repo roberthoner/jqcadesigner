@@ -74,8 +74,7 @@ public abstract class Engine
 
 		// Initialize the engine.
 		long initTime = System.currentTimeMillis();
-		_circuit.updateInputs( vectorTable );
-		_init();
+		_init( vectorTable );
 		initTime = System.currentTimeMillis() - initTime;
 
 		// Run the engine.
@@ -90,7 +89,7 @@ public abstract class Engine
 		return retval;
 	}
 
-	abstract protected void _init();
+	abstract protected void _init( VectorTable vectorTable );
 	abstract protected RunResults _run( VectorTable vectorTable );
 	
 	public abstract class RunResults

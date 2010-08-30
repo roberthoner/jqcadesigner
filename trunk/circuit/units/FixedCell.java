@@ -33,18 +33,15 @@ package jqcadesigner.circuit.units;
  */
 public class FixedCell extends Cell
 {
-	public final double polarization;
-
 	public FixedCell( Mode m, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
 	{
 		super( m, Function.FIXED, c, x, y, dd, ln, d );
-
-		polarization = super.calcPolarization();
 	}
 
 	@Override
-	public double calcPolarization()
+	public double tick()
 	{
-		return polarization;
+		String msg = "A FixedCell cannot be ticked.";
+		throw new RuntimeException( msg );
 	}
 }

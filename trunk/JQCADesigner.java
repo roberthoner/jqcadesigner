@@ -39,6 +39,7 @@ import jqcadesigner.engines.Engine;
 // TODO: implement bistable engine.
 // TODO: implement a class that allows easily reading engine results and output values.
 // TODO: make it so if no vector table file is specified, it automatically loads an exhaustive vector table.
+// TODO: add tickhandler
 public class JQCADesigner
 {
 	public static final String		PROGRAM_NAME = "JQCADesigner";
@@ -124,7 +125,6 @@ public class JQCADesigner
 		String engineName			= (String)options.get( "-e" );
 		String engineConfigFileName	= ((String)options.get( "-c" )).equals( "" )
 									? null : (String)options.get( "-c" );
-
 
 
 		try
