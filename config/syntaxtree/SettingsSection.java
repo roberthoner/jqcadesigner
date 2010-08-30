@@ -94,6 +94,58 @@ public class SettingsSection extends Section
 		return true;
 	}
 
+	public int get( String key, int defaultValue )
+	{
+		int retval = defaultValue;
+
+		String value = settings.get( key );
+		if( value != null )
+		{
+			retval = Integer.parseInt( value );
+		}
+
+		return retval;
+	}
+
+	public String get( String key, String defaultValue )
+	{
+		String retval = defaultValue;
+
+		String value = settings.get( key );
+		if( value != null )
+		{
+			retval = value;
+		}
+
+		return retval;
+	}
+
+	public double get( String key, double defaultValue )
+	{
+		double retval = defaultValue;
+
+		String value = settings.get( key );
+		if( value != null )
+		{
+			retval = Double.parseDouble( value );
+		}
+
+		return retval;
+	}
+
+	public boolean get( String key, boolean defaultValue )
+	{
+		boolean retval = defaultValue;
+
+		String value = settings.get( key );
+		if( value != null )
+		{
+			retval = Boolean.parseBoolean( value );
+		}
+
+		return retval;
+	}
+
 	@Override
 	public boolean hasSettings()
 	{

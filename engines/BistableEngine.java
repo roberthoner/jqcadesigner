@@ -39,6 +39,8 @@ import java.util.HashMap;
 import jqcadesigner.circuit.Circuit;
 import jqcadesigner.VectorTable;
 import jqcadesigner.circuit.units.Cell;
+import jqcadesigner.circuit.units.Clock;
+import jqcadesigner.circuit.units.InputCell;
 import jqcadesigner.circuit.units.QuantumDot;
 import jqcadesigner.config.ConfigFile;
 import jqcadesigner.config.syntaxtree.Section;
@@ -61,31 +63,36 @@ public final class BistableEngine extends Engine
 		public static final boolean	RANDOMIZE_CELLS				= true;
 	}
 
-	private final int		_numberOfSamples;
-	private final double	_convergenceTolerance;
-	private final double	_radiusOfEffect;
-	private final double	_epsilonR;
-	private final double	_clockHigh;
-	private final double	_clockLow;
-	private final double	_clockShift;
-	private final double	_clockAmplitudeFactor;
-	private final int		_maxIterationsPerSample;
-	private final double	_layerSeparation;
-	private final boolean	_randomizeCells;
-
-	private final SettingsSection _configSect;
-
-	private Cell[][] _cellMatrix;
+	protected final int		_numberOfSamples;
+	protected final double	_convergenceTolerance;
+	protected final double	_radiusOfEffect;
+	protected final double	_epsilonR;
+	protected final double	_clockHigh;
+	protected final double	_clockLow;
+	protected final double	_clockShift;
+	protected final double	_clockAmplitudeFactor;
+	protected final int		_maxIterationsPerSample;
+	protected final double	_layerSeparation;
+	protected final boolean	_randomizeCells;
 	
-	private final double _kinkConstant;
-	private static final double[][] _kinkSamePolarization =
+	protected Cell[][] _cellMatrix;
+	
+	protected final double _kinkConstant;
+
+	protected boolean _stableFlag;
+	protected boolean _stopSimulation;
+
+	/**
+	 * Used in _calcKinkEnergy.
+	 */
+	protected static final double[][] _kinkSamePolarization =
 	{
 		{ JQCADConstants.QCHARGE_SQRD_OVER_FOUR, -JQCADConstants.QCHARGE_SQRD_OVER_FOUR,
 			  JQCADConstants.QCHARGE_SQRD_OVER_FOUR, -JQCADConstants.QCHARGE_SQRD_OVER_FOUR },
 		{ -JQCADConstants.QCHARGE_SQRD_OVER_FOUR, JQCADConstants.QCHARGE_SQRD_OVER_FOUR,
 			  -JQCADConstants.QCHARGE_SQRD_OVER_FOUR, JQCADConstants.QCHARGE_SQRD_OVER_FOUR },
-		{ JQCADConstants.QCHARGE_SQRD_OVER_FOUR, -JQCADConstants.QCHARGE_SQRD_OVER_FOUR, JQCADConstants.QCHARGE_SQRD_OVER_FOUR,
-			  -JQCADConstants.QCHARGE_SQRD_OVER_FOUR },
+		{ JQCADConstants.QCHARGE_SQRD_OVER_FOUR, -JQCADConstants.QCHARGE_SQRD_OVER_FOUR,
+			  JQCADConstants.QCHARGE_SQRD_OVER_FOUR, -JQCADConstants.QCHARGE_SQRD_OVER_FOUR },
 		{ -JQCADConstants.QCHARGE_SQRD_OVER_FOUR, JQCADConstants.QCHARGE_SQRD_OVER_FOUR,
 			  -JQCADConstants.QCHARGE_SQRD_OVER_FOUR, JQCADConstants.QCHARGE_SQRD_OVER_FOUR }
 	};
@@ -104,10 +111,17 @@ public final class BistableEngine extends Engine
 	{
 		super( circuit, configFileName );
 
+		// Either they both should be null or neither should be null.
+		assert !(configFileName == null ^ _configFile == null);
+
+		SettingsSection configSect;
+
 		if( _configFile == null )
 		{
-			// This tells _loadConfigValue to use the default value.
-			_configSect = null;
+			// No config file was loaded so we need to create an empty
+			// SettingsSection to signify that we haven't loaded any extrenal
+			// settings -- i.e., we should use the defaults.
+			configSect = new SettingsSection();
 		}
 		else
 		{
@@ -119,110 +133,87 @@ public final class BistableEngine extends Engine
 				throw new EngineException( msg );
 			}
 
-			// This allows _loadConfigValue to see the values specified in the
-			// config file.
-			_configSect = (SettingsSection)section;
+			configSect = (SettingsSection)section;
 		}
 		
 		// Load the config settings.
-		_numberOfSamples =
-			(Integer)_loadConfigValue(	"number_of_samples",
-										DefaultConfig.NUMBER_OF_SAMPLES );
-		_convergenceTolerance =
-			(Double)_loadConfigValue(	"convergence_tolerance",
-										DefaultConfig.CONVERGENCE_TOLERANCE );
-		_radiusOfEffect =
-			(Double)_loadConfigValue(	"radius_of_effect",
-										DefaultConfig.RADIUS_OF_EFFECT );
-		_epsilonR =
-			(Double)_loadConfigValue(	"epsilonR",
-										DefaultConfig.EPSILON_R );
-		_clockHigh =
-			(Double)_loadConfigValue(	"clock_high",
-										DefaultConfig.CLOCK_HIGH );
-		_clockLow =
-			(Double)_loadConfigValue(	"clock_low",
-										DefaultConfig.CLOCK_LOW );
-		_clockShift =
-			(Double)_loadConfigValue(	"clock_shift",
-										DefaultConfig.CLOCK_SHIFT );
-		_clockAmplitudeFactor =
-			(Double)_loadConfigValue(	"clock_amplitude_factor",
-										DefaultConfig.CLOCK_AMPLITUDE_FACTOR );
-		_maxIterationsPerSample =
-			(Integer)_loadConfigValue(	"max_iterations_per_sample",
-										DefaultConfig.MAX_ITERATIONS_PER_SAMPLE );
-		_layerSeparation =
-			(Double)_loadConfigValue(	"layer_separation",
-										DefaultConfig.LAYER_SEPARATION );
-		_randomizeCells =
-			(Boolean)_loadConfigValue(	"randomize_cells",
-										DefaultConfig.RANDOMIZE_CELLS );
+		_numberOfSamples		= configSect.get(	"number_of_samples",
+													DefaultConfig.NUMBER_OF_SAMPLES );
 
+		_convergenceTolerance	= configSect.get(	"convergence_tolerance",
+													DefaultConfig.CONVERGENCE_TOLERANCE );
 
+		_radiusOfEffect			= configSect.get(	"radius_of_effect",
+													DefaultConfig.RADIUS_OF_EFFECT );
+
+		_epsilonR				= configSect.get(	"epsilonR",
+													DefaultConfig.EPSILON_R );
+
+		_clockHigh				= configSect.get(	"clock_high",
+													DefaultConfig.CLOCK_HIGH );
+
+		_clockLow				= configSect.get(	"clock_low",
+													DefaultConfig.CLOCK_LOW );
+
+		_clockShift				= configSect.get(	"clock_shift",
+													DefaultConfig.CLOCK_SHIFT );
+
+		_clockAmplitudeFactor	= configSect.get(	"clock_amplitude_factor",
+													DefaultConfig.CLOCK_AMPLITUDE_FACTOR );
+
+		_maxIterationsPerSample	= configSect.get(	"max_iterations_per_sample",
+													DefaultConfig.MAX_ITERATIONS_PER_SAMPLE );
+
+		_layerSeparation		= configSect.get(	"layer_separation",
+													DefaultConfig.LAYER_SEPARATION );
+
+		_randomizeCells			= configSect.get(	"randomize_cells",
+													DefaultConfig.RANDOMIZE_CELLS );
+
+		// Used by _calcKinkEnergy
 		_kinkConstant = 1 / (JQCADConstants.FOUR_PI_EPSILON * _epsilonR);
 	}
 
-	/**
-	 * Attempts to load a configuration value, defaulting to defaultValue if it can't.
-	 *
-	 * This is a helper method that is called by the constructor.  It is not
-	 * intended to called elsewhere.  If you need access to the loaded settings
-	 * you should use the private final fields which are initialized in the
-	 * constructor.
-	 *
-	 * @param key The config name.
-	 * @param defaultValue The default config value.
-	 * @return An object containing the value of the config name.
-	 */
-	private Object _loadConfigValue( String key, Object defaultValue )
+	// TODO: should this be a part of the engine super class?
+	public void stop()
 	{
-		assert key != null;
-
-		Object retval;
-		String value;
-
-		if( _configSect != null && (value = _configSect.settings.get( key )) != null )
-		{
-			if( defaultValue instanceof Integer )
-			{
-				retval = Integer.parseInt( value );
-			}
-			else if( defaultValue instanceof Double )
-			{
-				retval = Double.parseDouble( value );
-			}
-			else if( defaultValue instanceof Boolean )
-			{
-				retval = Boolean.parseBoolean( value );
-			}
-			else
-			{
-				retval = value;
-			}
-		}
-		else
-		{
-			retval = defaultValue;
-		}
-
-		return retval;
+		_stopSimulation = true;
 	}
-	
+
 	@Override
-	protected void _init()
+	protected void _init( VectorTable vectorTable )
 	{
 		_log.info( "Bistable engine initializing..." );
+
+		// Put the values in the vectorTable into their associated input cell.
+		_circuit.updateInputs( vectorTable, _numberOfSamples );
+
+		// Prepare the clocks.
+		_circuit.updateClocks(	vectorTable.inputs.length,
+								_numberOfSamples,
+								_clockLow,
+								_clockHigh,
+								_clockAmplitudeFactor,
+								_clockShift );
+
 		final Cell[][] cellMatrix = _circuit.getCellMatrix();
+
+		// Tell the cells not to update their dots, we don't need this information
+		// for this engine and it will just waste CPU.
+		for( Cell[] layer : cellMatrix )
+		{
+			for( Cell cell : layer )
+			{
+				cell.setUpdateDots( false );
+			}
+		}
 
 		if( _randomizeCells )
 		{
 			_randomizeCells( cellMatrix );
 		}
 
-		_initCellInfo( cellMatrix );
-
-		// TODO: Should I set up trace stuff?
+		_initCells( cellMatrix, _circuit.getClocks() );
 
 		_cellMatrix = cellMatrix;
 		_log.info( "Bistable engine finished initializing." );
@@ -238,15 +229,87 @@ public final class BistableEngine extends Engine
 		RunResults retval = new RunResults();
 
 		final Cell[][] cellMatrix = _cellMatrix;
+		final int layerCount = cellMatrix.length;
 		final int cellCount = _circuit.getCellCount();
 
+		final InputCell[] inputCells = _circuit.getInputCells();
+		final int inputCellsCount = inputCells.length;
 
+		final int maxIterationsPerSample = _maxIterationsPerSample;
+
+		final Clock[] clocks = _circuit.getClocks();
+
+		final Clock clock0 = _circuit.getClock( 0 );
+		final Clock clock1 = _circuit.getClock( 1 );
+		final Clock clock2 = _circuit.getClock( 2 );
+		final Clock clock3 = _circuit.getClock( 3 );
+
+		for( int i = _numberOfSamples; i > 0 && !_stopSimulation; --i )
+		{
+			// Advance the clocks.
+			clock0.tick();
+			clock1.tick();
+			clock2.tick();
+			clock3.tick();
+
+			// Update the input cells.
+			for( int j = inputCellsCount - 1; j >= 0; --j )
+			{
+				inputCells[j].tick();
+			}
+
+			if( _randomizeCells )
+			{
+				_randomizeCells( cellMatrix );
+			}
+
+			int iterationCount = 0;
+			_stableFlag = false;
+			while( !_stableFlag )
+			{
+				if( iterationCount > maxIterationsPerSample )
+				{
+					// TODO: make note that we couldn't get to a stable state.
+					break;
+				}
+
+				// Update the cells.
+				for( int layerNum = layerCount - 1; layerNum >= 0; --layerNum )
+				{
+					final Cell[] cellLayer = cellMatrix[ layerNum ];
+					final int cellsInLayer = cellLayer.length;
+
+					for( int cellNum = cellsInLayer - 1; cellNum >= 0; --cellNum )
+					{
+						final Cell crtCell = cellLayer[ cellNum ];
+
+						final Cell.Function crtFunc = crtCell.function;
+						if( crtFunc == Cell.Function.NORMAL
+							|| crtFunc == Cell.Function.OUTPUT
+							|| (crtFunc == Cell.Function.INPUT
+								&& !((InputCell)crtCell).active) )
+						{
+							crtCell.tick();
+						}
+					}
+				}
+			}
+
+			// TODO: should I tick the inputs one last time?
+		}
+
+		// TODO: handle making the simulated output pretty.
 
 		_log.info( "Bistable engine finished running." );
 		
 		return retval;
 	}
 
+	/**
+	 * Randomly swaps the cells around. Makes as many swaps as there are cells.
+	 *
+	 * @param cellMatrix
+	 */
 	protected void _randomizeCells( final Cell[][] cellMatrix )
 	{
 		assert cellMatrix != null;
@@ -259,8 +322,8 @@ public final class BistableEngine extends Engine
 			Cell[] crtLayer = cellMatrix[i];
 			int crtCellCount = crtLayer.length;
 
-			// Perform twice as many swaps as there are cells.
-			for( int j = 2*crtCellCount; j > 0; --j )
+			// Perform as many swaps as there are cells.
+			for( int j = crtCellCount; j > 0; --j )
 			{
 				int index1 = rand.nextInt( crtCellCount );
 				int index2 = rand.nextInt( crtCellCount );
@@ -272,7 +335,15 @@ public final class BistableEngine extends Engine
 		}
 	}
 
-	protected void _initCellInfo( final Cell[][] cellMatrix )
+	/**
+	 * Initializes each of the cells.
+	 *
+	 * Calculates the _neighbors and kink energies for each cell in the
+	 * cellMatrix. Sets the cells' TickHandlers.
+	 *
+	 * @param cellMatrix
+	 */
+	protected void _initCells( final Cell[][] cellMatrix, final Clock[] clocks )
 	{
 		final KinkEnergyCache kinkCache = new KinkEnergyCache();
 
@@ -284,21 +355,33 @@ public final class BistableEngine extends Engine
 			// Counting backwards for performance
 			for( int j = crtCellCount - 1; j >= 0; --j )
 			{
-				Cell crtCell = cellMatrix[i][j];
+				final Cell crtCell = cellMatrix[i][j];
+				final Cell.Function crtFunc = crtCell.function;
 
-				Cell[] neighbors = _findCellNeighbors( cellMatrix, crtCell );
-				double[] kinkEnergies = _calcKinkEnergies( kinkCache, crtCell, neighbors );
+				if( crtFunc == Cell.Function.NORMAL
+					|| crtFunc == Cell.Function.OUTPUT
+					|| (crtFunc == Cell.Function.INPUT
+						&& !((InputCell)crtCell).active) )
+				{
+					Cell[] neighbors = _findCellNeighbors( cellMatrix, crtCell );
+					double[] kinkEnergies = _calcKinkEnergies( kinkCache, crtCell, neighbors );
 
-				crtCell.info = new CellInfo( neighbors, kinkEnergies );
+					TickHandler th = new TickHandler(	crtCell,
+														neighbors,
+														kinkEnergies,
+														clocks[ crtCell.clock ] );
+					crtCell.setTickHandler( th );
+				}
 			}
 		}
 	}
 
 	/**
-	 * Finds the neighbors of a cell within a cellMatrix.
+	 * Finds the _neighbors of a cell within a cellMatrix.
+	 *
 	 * @param cellMatrix
-	 * @param cell The cell to find the neighbors of.
-	 * @return
+	 * @param cell The cell to find the _neighbors of.
+	 * @return The cells determined to be within the radius of effect.
 	 */
 	protected Cell[] _findCellNeighbors(	final Cell[][] cellMatrix,
 											final Cell cell )
@@ -344,6 +427,14 @@ public final class BistableEngine extends Engine
 		return neighbors.toArray( new Cell[ neighbors.size() ] );
 	}
 
+	/**
+	 * Calculate the kink energies between the cell and its _neighbors.
+	 *
+	 * @param kinkCache A cache of kink energies to speed up the process.
+	 * @param cell The main cell.
+	 * @param _neighbors The main cell's _neighbors.
+	 * @return The kink energies for all of the _neighbors.
+	 */
 	protected double[] _calcKinkEnergies(	KinkEnergyCache kinkCache,
 											final Cell cell,
 											final Cell[] neighbors )
@@ -355,10 +446,6 @@ public final class BistableEngine extends Engine
 
 		HashMap<Cell, Double> cellCache = new HashMap<Cell, Double>();
 
-		// TODO: currently this calculates redundantly. We should keep track of
-		// the kink energies that have already been computed in a hash table
-		// or something, and use those values instead of recalculating them
-		// for each neighbor pair.
 		for( int i = neighborsCount - 1; i >= 0; --i )
 		{
 			final Cell crtNeighbor = neighbors[i];
@@ -385,6 +472,13 @@ public final class BistableEngine extends Engine
 		return kinkEnergies;
 	}
 
+	/**
+	 * Calculate the kink energy between two cells.
+	 *
+	 * @param cell1
+	 * @param cell2
+	 * @return The kink energy.
+	 */
 	protected double _calcKinkEnergy( final Cell cell1, final Cell cell2 )
 	{
 		final double zDiff	= Math.abs( cell1.layerNum - cell2.layerNum )
@@ -417,7 +511,7 @@ public final class BistableEngine extends Engine
 
 				assert distance != 0;
 
-				// TODO: Make this more clear.
+				// TODO: make sure this is equivalent to what is in the original code.
 				double newEnergySame = samePolarization[i][j] / distance;
 				energySame += newEnergySame;
 				energyDiff -= newEnergySame;
@@ -427,25 +521,89 @@ public final class BistableEngine extends Engine
 		return _kinkConstant * (energyDiff - energySame);
 	}
 
-	/**
-	 * Holds information specific to the BistableEngine on a single cell.
-	 */
-	protected static class CellInfo extends Cell.CellInfo
+	protected class TickHandler extends Cell.TickHandler
 	{
-		public final Cell[] neighbors;
-		public final double[] kinkEnergies;
+		/**
+		 * The cells determined to be within the radius of effect of the cell.
+		 */
+		protected final Cell[] _neighbors;
 
-		public CellInfo( Cell[] n, double[] ke )
+		/**
+		 *  Kink energies between this cell and each of its _neighbors.
+		 */
+		protected final double[] _kinkEnergies;
+
+		protected final Clock _clock;
+
+		/**
+		 * Construct the TickHandler.
+		 *
+		 * @param c The cell to which this handler belongs.
+		 * @param n The _neighbors of the cell.
+		 * @param ke The kink energies of the between this cell and its _neighbors.
+		 */
+		public TickHandler( Cell cell, Cell[] n, double[] ke, Clock cl )
 		{
-			neighbors = n;
-			kinkEnergies = ke;
+			super( cell );
+
+			assert n.length == ke.length;
+
+			_neighbors = n;
+			_kinkEnergies = ke;
+			_clock = cl;
+		}
+
+		@Override
+		public double tick()
+		{
+			final Cell cell = _cell;
+			final double oldPol = cell.getPolarization();
+
+			final Cell[] neighbors = _neighbors;
+			final int neighborCount = neighbors.length;
+
+			final double[] ke = _kinkEnergies;
+
+			double polarizationMath = 0;
+
+			for( int i = neighborCount - 1; i >= 0; --i )
+			{
+				polarizationMath += ke[i] * neighbors[i].getPolarization();
+			}
+
+			polarizationMath /= 2.0 * _clock.check();
+
+			double newPol =
+				(polarizationMath > 1000)
+				? 1 : (polarizationMath < -1000)
+					? -1 : (Math.abs( polarizationMath ) < 0.001)
+						? polarizationMath
+						: polarizationMath / Math.sqrt( 1 + polarizationMath * polarizationMath );
+
+			cell.setPolarization( newPol );
+
+			// _stableFlag and _convergenceTolerance come from the containing
+			// instance of BistableEngine.
+			boolean stable = (Math.abs( newPol - oldPol ) <= _convergenceTolerance);
+			
+			// We don't want to set the flag to true just because this one cell
+			// is stable.  They all have to be stable for the system to be
+			// considered stable.
+			if( !stable )
+			{
+				_stableFlag = false;
+			}
+
+			return newPol;
 		}
 	}
 
+	/**
+	 * A helper class for readability. Used when kink energies are being calculated.
+	 */
 	protected static class KinkEnergyCache extends
 		HashMap<Cell, HashMap<Cell, Double>>
 	{
-
 	}
 
 	public class RunResults extends Engine.RunResults
