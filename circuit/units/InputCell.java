@@ -74,7 +74,7 @@ public class InputCell extends Cell
 		// Says how often an extra tick should be inserted, so as to make up for
 		// the excess ticks that don't fit evenly into the granularity.
 		final int extraInsertFreq = excessTicks > 0 ? valueCount / excessTicks
-									: 1;
+									: 0;
 
 		_inputValues.setSize( granularity );
 
@@ -87,7 +87,7 @@ public class InputCell extends Cell
 				_inputValues.addNext( crtValue );
 			}
 
-			if( i % extraInsertFreq == 0 )
+			if( extraInsertFreq != 0 && i % extraInsertFreq == 0 )
 			{
 				// Add an extra here to make sure that we completely fill up the
 				// DataTrace.

@@ -41,6 +41,7 @@ import jqcadesigner.VectorTable;
 import jqcadesigner.circuit.units.Cell;
 import jqcadesigner.circuit.units.Clock;
 import jqcadesigner.circuit.units.InputCell;
+import jqcadesigner.circuit.units.OutputCell;
 import jqcadesigner.circuit.units.QuantumDot;
 import jqcadesigner.config.ConfigFile;
 import jqcadesigner.config.syntaxtree.Section;
@@ -235,6 +236,9 @@ public final class BistableEngine extends Engine
 		final InputCell[] inputCells = _circuit.getInputCells();
 		final int inputCellsCount = inputCells.length;
 
+		final OutputCell[] outputCells = _circuit.getOutputCells();
+		final int outputCellsCount = outputCells.length;
+
 		final int maxIterationsPerSample = _maxIterationsPerSample;
 
 		final Clock[] clocks = _circuit.getClocks();
@@ -289,10 +293,19 @@ public final class BistableEngine extends Engine
 							|| (crtFunc == Cell.Function.INPUT
 								&& !((InputCell)crtCell).active) )
 						{
+							// TODO: This is going to get called multiple times
+							// per sample, since it's in the while( !_stableFlag )
+							// This is causing the output buffers to quickly over flow.
 							crtCell.tick();
 						}
 					}
 				}
+			}
+
+			// Have the output cells plot their stable values.
+			for( int j = outputCellsCount - 1; j >= 0; --j )
+			{
+				outputCells[j].plotPolarization();
 			}
 
 			// TODO: should I tick the inputs one last time?
