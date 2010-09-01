@@ -52,15 +52,8 @@ public class OutputCell extends Cell
 		_valueCache.setSize( size );
 	}
 
-	/**
-	 * Sets the cell's polarization and adds the value to its cache.
-	 * @param polarization
-	 */
-	@Override
-	public void setPolarization( double polarization )
+	public void plotPolarization()
 	{
-		super.setPolarization( polarization );
-
 		if( !_valueCache.hasNext() )
 		{
 			String msg	= "Output cell " + _valueCache.getName()
@@ -69,7 +62,7 @@ public class OutputCell extends Cell
 			throw new RuntimeException( msg );
 		}
 
-		_valueCache.addNext( polarization );
+		_valueCache.addNext( getPolarization() );
 	}
 
 	@Override

@@ -115,7 +115,7 @@ public final class Circuit
 
 	public InputCell[] getInputCells()
 	{
-		return (InputCell[])_inputCells.toArray();
+		return _inputCells.toArray( new InputCell[ _inputCells.size() ] );
 	}
 
 	/**
@@ -147,7 +147,7 @@ public final class Circuit
 
 	public OutputCell[] getOutputCells()
 	{
-		return (OutputCell[])_outputCells.toArray();
+		return _outputCells.toArray( new OutputCell[ _outputCells.size() ] );
 	}
 
 	public Clock getClock( int clockNum )
