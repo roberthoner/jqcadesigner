@@ -268,9 +268,10 @@ public final class BistableEngine extends Engine
 			}
 
 			int iterationCount = 0;
-			_stableFlag = false;
-			while( !_stableFlag )
+
+			do
 			{
+				_stableFlag = true;
 				if( iterationCount > maxIterationsPerSample )
 				{
 					// TODO: make note that we couldn't get to a stable state.
@@ -293,15 +294,14 @@ public final class BistableEngine extends Engine
 							|| (crtFunc == Cell.Function.INPUT
 								&& !((InputCell)crtCell).active) )
 						{
-							// TODO: This is going to get called multiple times
-							// per sample, since it's in the while( !_stableFlag )
-							// This is causing the output buffers to quickly over flow.
 							crtCell.tick();
 						}
 					}
 				}
 			}
+			while( !_stableFlag );
 
+			// TODO: Why are the output cells filling up after one iteration?
 			// Have the output cells plot their stable values.
 			for( int j = outputCellsCount - 1; j >= 0; --j )
 			{
