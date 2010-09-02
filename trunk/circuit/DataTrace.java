@@ -27,6 +27,9 @@
 
 package jqcadesigner.circuit;
 
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
+
 /**
  *
  * @author Robert Honer <rhoner@cs.ucla.edu>
@@ -37,12 +40,12 @@ public class DataTrace
 	private double[]	_data;
 	private int			_index;
 
-	public DataTrace( String name )
+	public DataTrace( final String name )
 	{
 		this( name, 0 );
 	}
 
-	public DataTrace( String name, int size )
+	public DataTrace( final String name, final int size )
 	{
 		if( name == null )
 		{
@@ -68,7 +71,7 @@ public class DataTrace
 	 * Sets the size for the DataTrace, clearing all of the previous values.
 	 * @param size
 	 */
-	public void setSize( int size )
+	public void setSize( final int size )
 	{
 		if( size < 0 )
 		{
@@ -90,7 +93,7 @@ public class DataTrace
 		return _index;
 	}
 
-	public void setIndex( int index )
+	public void setIndex( final int index )
 	{
 		if( index < 0 || index >= _data.length )
 		{
@@ -106,7 +109,7 @@ public class DataTrace
 		return _index < _data.length;
 	}
 
-	public void addNext( double value )
+	public void addNext( final double value )
 	{
 		if( _index >= _data.length )
 		{
@@ -134,7 +137,7 @@ public class DataTrace
 		return _data[ _index++ ];
 	}
 
-	public double get( int index )
+	public double get( final int index )
 	{
 		if( index < 0 || index >= _data.length )
 		{
@@ -145,7 +148,7 @@ public class DataTrace
 		return _data[ index ];
 	}
 
-	public void set( int index, double value )
+	public void set( final int index, final double value )
 	{
 		if( index < 0 || index >= _data.length )
 		{
@@ -160,5 +163,15 @@ public class DataTrace
 		}
 
 		_data[ index ] = value;
+	}
+
+	public void outputCSV( final String fileName ) throws FileNotFoundException
+	{
+		PrintStream ps = new PrintStream( fileName );
+
+		for( int i = 0; i < _data.length; ++i )
+		{
+			ps.printf( "%d,%s\n", i+1, _data[i] );
+		}
 	}
 }
