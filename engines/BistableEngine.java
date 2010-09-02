@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jqcadesigner.JQCADConstants;
 import java.lang.Math;
 import java.util.HashMap;
@@ -189,6 +191,10 @@ public final class BistableEngine extends Engine
 		// Put the values in the vectorTable into their associated input cell.
 		_circuit.updateInputs( vectorTable, _numberOfSamples );
 
+		_circuit.updateOutputs( _numberOfSamples );
+
+		// TODO: Am I initializing the outputs?
+
 		// Prepare the clocks.
 		_circuit.updateClocks(	vectorTable.inputs.length,
 								_numberOfSamples,
@@ -196,6 +202,8 @@ public final class BistableEngine extends Engine
 								_clockHigh,
 								_clockAmplitudeFactor,
 								_clockShift );
+
+
 
 		final Cell[][] cellMatrix = _circuit.getCellMatrix();
 
@@ -301,7 +309,6 @@ public final class BistableEngine extends Engine
 			}
 			while( !_stableFlag );
 
-			// TODO: Why are the output cells filling up after one iteration?
 			// Have the output cells plot their stable values.
 			for( int j = outputCellsCount - 1; j >= 0; --j )
 			{
@@ -314,7 +321,15 @@ public final class BistableEngine extends Engine
 		// TODO: handle making the simulated output pretty.
 
 		_log.info( "Bistable engine finished running." );
-		
+		try
+		{
+			outputCells[0].outputCSV( "output1.csv" );
+		}
+		catch( FileNotFoundException ex )
+		{
+			_log.log( Level.SEVERE, null, ex );
+		}
+
 		return retval;
 	}
 

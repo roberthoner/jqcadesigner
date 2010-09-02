@@ -150,6 +150,20 @@ public final class Circuit
 		return _outputCells.toArray( new OutputCell[ _outputCells.size() ] );
 	}
 
+	public void updateOutputs( final int granularity )
+	{
+		if( granularity <= 0 )
+		{
+			String msg = "The granularity of the outputs must be greater than 0.";
+			throw new IllegalArgumentException( msg );
+		}
+
+		for( OutputCell outputCell : _outputCells )
+		{
+			outputCell.setValueCacheSize( granularity );
+		}
+	}
+
 	public Clock getClock( int clockNum )
 	{
 		if( clockNum < 0 || clockNum > 3 )

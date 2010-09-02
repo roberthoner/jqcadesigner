@@ -27,6 +27,7 @@
 
 package jqcadesigner.circuit.units;
 
+import java.io.FileNotFoundException;
 import jqcadesigner.circuit.DataTrace;
 
 /**
@@ -63,6 +64,11 @@ public class OutputCell extends Cell
 		}
 
 		_valueCache.addNext( getPolarization() );
+	}
+
+	public void outputCSV( String fileName ) throws FileNotFoundException
+	{
+		_valueCache.outputCSV( fileName );
 	}
 
 	@Override
