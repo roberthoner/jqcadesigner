@@ -27,6 +27,7 @@
 
 package jqcadesigner.circuit.units;
 
+import java.io.FileNotFoundException;
 import jqcadesigner.circuit.DataTrace;
 
 /**
@@ -138,5 +139,10 @@ public class Clock
 	public double check()
 	{
 		return _crtValue;
+	}
+
+	public void outputCSV( String fileName ) throws FileNotFoundException
+	{
+		_trace.outputCSV( fileName );
 	}
 }
