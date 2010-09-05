@@ -245,15 +245,13 @@ public final class Circuit
 	{
 		assert designSect != null && _layers != null;
 
-		if( !designSect.containsSubSections( "TYPE:QCADLayer", "TYPE:BUS_LAYOUT" ) )
+		if( !designSect.containsSubSections( "TYPE:QCADLayer"/*, "TYPE:BUS_LAYOUT"*/ ) )
 		{
 			String msg = "Missing sub-sections from design.";
 			throw new CircuitException( msg );
 		}
 		
 		SectionGroup layers = designSect.subSections.get( "TYPE:QCADLayer" );
-		Section busLayout = designSect.subSections.get( "TYPE:BUS_LAYOUT" ).get( 0 );
-		SectionGroup buses = busLayout.subSections.get( "TYPE:BUS" );
 
 		int layerCount = layers.size();
 		for( int i = 0; i < layerCount; ++i )
@@ -277,19 +275,25 @@ public final class Circuit
 			}
 		}
 
-		int busCount = buses.size();
-		for( int i = 0; i < busCount; ++i )
+		if( designSect.containsSubSections( "TYPE:BUS_LAYOUT" ) )
 		{
-			Section crtBusSect = buses.get( i );
+			Section busLayout = designSect.subSections.get( "TYPE:BUS_LAYOUT" ).get( 0 );
+			SectionGroup buses = busLayout.subSections.get( "TYPE:BUS" );
 
-			if( !crtBusSect.hasSettings() )
+			int busCount = buses.size();
+			for( int i = 0; i < busCount; ++i )
 			{
-				 String msg = "Settings missing from bus.";
-				 throw new CircuitException( msg );
-			}
+				Section crtBusSect = buses.get( i );
 
-			Bus bus = _loadBus( (SettingsSection)crtBusSect );
-			_busLayout.add( bus );
+				if( !crtBusSect.hasSettings() )
+				{
+					 String msg = "Settings missing from bus.";
+					 throw new CircuitException( msg );
+				}
+
+				Bus bus = _loadBus( (SettingsSection)crtBusSect );
+				_busLayout.add( bus );
+			}
 		}
 	}
 
@@ -497,12 +501,12 @@ public final class Circuit
 			throw new CircuitException( "Quantum dot does not have enough settings." );
 		}
 
-		double xCoord	= Double.parseDouble( dotSect.settings.get( "x" ) );
-		double yCoord	= Double.parseDouble( dotSect.settings.get( "y" ) );
-		double diameter = Double.parseDouble( dotSect.settings.get( "diameter" ) );
-		double charge	= Double.parseDouble( dotSect.settings.get( "charge" ) );
-		double spin		= Double.parseDouble( dotSect.settings.get( "spin" ) );
-		double potential= Double.parseDouble( dotSect.settings.get( "potential" ) );
+		double xCoord	= _parseDouble( dotSect.settings.get( "x" ) );
+		double yCoord	= _parseDouble( dotSect.settings.get( "y" ) );
+		double diameter = _parseDouble( dotSect.settings.get( "diameter" ) );
+		double charge	= _parseDouble( dotSect.settings.get( "charge" ) );
+		double spin		= _parseDouble( dotSect.settings.get( "spin" ) );
+		double potential= _parseDouble( dotSect.settings.get( "potential" ) );
 
 		return new QuantumDot( xCoord, yCoord, diameter, charge, spin, potential );
 	}
@@ -540,6 +544,19 @@ public final class Circuit
 		int[] inputCells = dataSect.data.get( 0 );
 
 		return new Bus( name, func, inputCells );
+	}
+
+	private double _parseDouble( String str )
+	{
+		if( str.equals( "-1.#QNAN0" ) ) // To remedy a bug in QCADesigner
+		{
+			return 0;
+		}
+		else
+		{
+			return Double.parseDouble( str );
+		}
+
 	}
 
 	public static class CircuitException extends Exception

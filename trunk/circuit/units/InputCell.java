@@ -27,6 +27,7 @@
 
 package jqcadesigner.circuit.units;
 
+import java.io.FileNotFoundException;
 import jqcadesigner.circuit.DataTrace;
 
 /**
@@ -69,10 +70,11 @@ public class InputCell extends Cell
 		final int ticksPerValue = granularity / valueCount;
 
 		// The remainder of the above integer division.
-		final int excessTicks = granularity - (ticksPerValue * valueCount);
+		int excessTicks = granularity - (ticksPerValue * valueCount);
 		
 		// Says how often an extra tick should be inserted, so as to make up for
-		// the excess ticks that don't fit evenly into the granularity.
+		// the excess ticks that don't fit evenly into the granularity. This
+		// distributes the excess ticks more evenly.
 		final int extraInsertFreq = excessTicks > 0 ? valueCount / excessTicks
 									: 0;
 
@@ -87,13 +89,18 @@ public class InputCell extends Cell
 				_inputValues.addNext( crtValue );
 			}
 
-			if( extraInsertFreq != 0 && i % extraInsertFreq == 0 )
+			if( extraInsertFreq != 0 && excessTicks-- > 0 && i % extraInsertFreq == 0 )
 			{
 				// Add an extra here to make sure that we completely fill up the
 				// DataTrace.
 				_inputValues.addNext( crtValue );
 			}
 		}
+	}
+
+	public void outputCSV( String fileName ) throws FileNotFoundException
+	{
+		_inputValues.outputCSV( fileName );
 	}
 
 	@Override

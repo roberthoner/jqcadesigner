@@ -196,7 +196,7 @@ public final class BistableEngine extends Engine
 		// TODO: Am I initializing the outputs?
 
 		// Prepare the clocks.
-		_circuit.updateClocks(	vectorTable.inputs.length,
+		_circuit.updateClocks(	vectorTable.inputs[0].length,
 								_numberOfSamples,
 								_clockLow,
 								_clockHigh,
@@ -250,6 +250,18 @@ public final class BistableEngine extends Engine
 		final int maxIterationsPerSample = _maxIterationsPerSample;
 
 		final Clock[] clocks = _circuit.getClocks();
+
+		for( int i = 0; i < 4; ++i )
+		{
+			try
+			{
+				clocks[i].outputCSV( "clock" + i + ".csv" );
+			}
+			catch( FileNotFoundException ex )
+			{
+				Logger.getLogger( BistableEngine.class.getName() ).log( Level.SEVERE, null, ex );
+			}
+		}
 
 		final Clock clock0 = _circuit.getClock( 0 );
 		final Clock clock1 = _circuit.getClock( 1 );
@@ -321,15 +333,18 @@ public final class BistableEngine extends Engine
 		// TODO: handle making the simulated output pretty.
 
 		_log.info( "Bistable engine finished running." );
-		try
-		{
-			outputCells[0].outputCSV( "output1.csv" );
-		}
-		catch( FileNotFoundException ex )
-		{
-			_log.log( Level.SEVERE, null, ex );
-		}
 
+		for( int i = 0; i < outputCells.length; ++i )
+		{
+			try
+			{
+				outputCells[i].outputCSV( "output"+i+".csv" );
+			}
+			catch( FileNotFoundException ex )
+			{
+				_log.log( Level.SEVERE, null, ex );
+			}
+		}
 		return retval;
 	}
 
@@ -621,6 +636,8 @@ public final class BistableEngine extends Engine
 			{
 				_stableFlag = false;
 			}
+
+			//_stableFlag = stable;
 
 			return newPol;
 		}
