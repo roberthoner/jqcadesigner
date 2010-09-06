@@ -27,22 +27,16 @@
 
 package jqcadesigner.circuit.units;
 
-import java.awt.Color;
-
 /**
  *
  * @author Robert Honer <rhoner@cs.ucla.edu>
  */
-public class DesignObject
+public class Label
 {
-/*	public final double xCoord;
-	public final double yCoord;
-	public final boolean selected;
-	public final Color color;
+	public final String text;
 
-	public DesignObject( double x, double y, boolean selected, Color color )
+	public Label( String t )
 	{
-		x =
+		text = t;
 	}
-*/
 }
