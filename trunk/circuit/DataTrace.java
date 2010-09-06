@@ -36,18 +36,23 @@ import java.io.PrintStream;
  */
 public class DataTrace
 {
-	private String		_name;
+	public String		name;
 	private double[]	_data;
 	private int			_index;
+	
+	public DataTrace()
+	{
+		this( "", 0 );
+	}
 
 	public DataTrace( final String name )
 	{
 		this( name, 0 );
 	}
 
-	public DataTrace( final String name, final int size )
+	public DataTrace( final String n, final int size )
 	{
-		if( name == null )
+		if( n == null )
 		{
 			throw new IllegalArgumentException( "DataTrace can't have a null name." );
 		}
@@ -57,14 +62,9 @@ public class DataTrace
 			throw new IllegalArgumentException( "DataTrace can't have a negative size." );
 		}
 
-		_name = name;
+		name = n;
 		_data = new double[ size ];
 		_index = 0;
-	}
-
-	public String getName()
-	{
-		return _name;
 	}
 
 	/**
@@ -81,6 +81,11 @@ public class DataTrace
 
 		_data = new double[ size ];
 		_index = 0;
+	}
+
+	public int getSize()
+	{
+		return _data.length;
 	}
 
 	public void resetIndex()

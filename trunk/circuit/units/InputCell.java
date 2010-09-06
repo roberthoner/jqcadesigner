@@ -47,8 +47,18 @@ public class InputCell extends Cell
 	{
 		super( m, Function.INPUT, c, x, y, dd, ln, d );
 
-		_inputValues = new DataTrace( "Input" );
+		_inputValues = new DataTrace();
 		active = true;
+	}
+
+	public void setName( String name )
+	{
+		_inputValues.name = name;
+	}
+
+	public String getName()
+	{
+		return _inputValues.name;
 	}
 
 	public void setValues( boolean[] values, int granularity )
@@ -68,7 +78,7 @@ public class InputCell extends Cell
 		}
 
 		final int ticksPerValue = granularity / valueCount;
-
+		
 		// The remainder of the above integer division.
 		int excessTicks = granularity - (ticksPerValue * valueCount);
 		
@@ -77,9 +87,9 @@ public class InputCell extends Cell
 		// distributes the excess ticks more evenly.
 		final int extraInsertFreq = excessTicks > 0 ? valueCount / excessTicks
 									: 0;
-
+		
 		_inputValues.setSize( granularity );
-
+		
 		for( int i = 0; i < valueCount; ++i )
 		{
 			double crtValue = values[i] ? 1.0 : -0.1;
@@ -108,7 +118,7 @@ public class InputCell extends Cell
 	{
 		_inputValues.resetIndex();
 	}
-
+	
 	/**
 	 * Advance the cell's, returning it's new polarization.
 	 *

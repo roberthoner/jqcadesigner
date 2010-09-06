@@ -326,19 +326,20 @@ public final class BistableEngine extends Engine
 			{
 				outputCells[j].plotPolarization();
 			}
-
-			// TODO: should I tick the inputs one last time?
 		}
-
-		// TODO: handle making the simulated output pretty.
-
 		_log.info( "Bistable engine finished running." );
 
 		for( int i = 0; i < outputCells.length; ++i )
 		{
+			for( byte v : outputCells[i].getValues( _circuit.getClock( outputCells[i].clock ) ) )
+			{
+				System.err.print( v+" " );
+			}
+			System.err.println();
+
 			try
 			{
-				outputCells[i].outputCSV( "output"+i+".csv" );
+				outputCells[i].outputCSV( outputCells[i].getName()+".csv" );
 			}
 			catch( FileNotFoundException ex )
 			{

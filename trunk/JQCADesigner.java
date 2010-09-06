@@ -36,16 +36,14 @@ import jqcadesigner.engines.BistableEngine;
 import jqcadesigner.engines.Engine;
 
 // Todos for Alpha:
-// TODO: implement a class that allows easily reading engine results and output values.
+// TODO: Put a pointer to the circuit in each of the cells?
 // TODO: make it so if no vector table file is specified, it automatically loads an exhaustive vector table.
-// TODO: Load design data into Cells. Mainly need to get the names of inputs and outputs.
 public class JQCADesigner
 {
 	public static final String		PROGRAM_NAME = "JQCADesigner";
 	public static final String		PROGRAM_VERSION = "0.1a";
 	public static final String[][]	PROGRAM_AUTHORS = { {"Robert Honer", "rhoner@ucla.edu"} };
 	public static final String		PROGRAM_LICENSE = "BSD";
-
 
 	public static final String[]	VALID_ENGINES = { "bistable" };
 

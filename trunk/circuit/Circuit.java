@@ -41,6 +41,7 @@ import jqcadesigner.circuit.units.CellLayer;
 import jqcadesigner.circuit.units.Clock;
 import jqcadesigner.circuit.units.FixedCell;
 import jqcadesigner.circuit.units.InputCell;
+import jqcadesigner.circuit.units.Label;
 import jqcadesigner.circuit.units.Layer;
 import jqcadesigner.circuit.units.NormalCell;
 import jqcadesigner.circuit.units.OutputCell;
@@ -386,7 +387,7 @@ public final class Circuit
 	private Cell _loadCell( SettingsSection cellSect ) throws CircuitException
 	{
 		assert cellSect != null;
-
+		
 		Cell cell;
 
 		boolean valid = cellSect.containsSettings(	"cell_options.cxCell",
@@ -421,13 +422,13 @@ public final class Circuit
 		}
 
 		double xCoord =
-			Double.parseDouble( cellSect.settings.get( "cell_options.cxCell" ) );
+			_parseDouble( cellSect.settings.get( "cell_options.cxCell" ) );
 
 		double yCoord =
-			Double.parseDouble( cellSect.settings.get( "cell_options.cyCell" ) );
+			_parseDouble( cellSect.settings.get( "cell_options.cyCell" ) );
 
 		double dotDiameter =
-			Double.parseDouble( cellSect.settings.get( "cell_options.dot_diameter" ) );
+			_parseDouble( cellSect.settings.get( "cell_options.dot_diameter" ) );
 
 		byte clock =
 			Byte.parseByte( cellSect.settings.get( "cell_options.clock" ) );
@@ -463,12 +464,18 @@ public final class Circuit
 		else if( funcString.endsWith( "OUTPUT" ) )
 		{
 			cell = new OutputCell( mode, clock, xCoord, yCoord, dotDiameter, _crtLayerNum, qDots );
-			_outputCells.add( (OutputCell)cell );
+			OutputCell ocell = (OutputCell)cell;
+			Label label = _loadLabel( cellSect );
+			ocell.setName( label.text );
+			_outputCells.add( ocell );
 		}
 		else if( funcString.endsWith( "INPUT" ) )
 		{
 			cell = new InputCell( mode, clock, xCoord, yCoord, dotDiameter, _crtLayerNum, qDots );
-			_inputCells.add( (InputCell)cell );
+			InputCell icell = (InputCell)cell;
+			Label label = _loadLabel( cellSect );
+			icell.setName( label.text );
+			_inputCells.add( icell );
 		}
 		else if( funcString.endsWith( "FIXED" ) )
 		{
@@ -480,7 +487,7 @@ public final class Circuit
 			String msg = "Unknown cell function: " + funcString;
 			throw new CircuitException( msg );
 		}
-
+		
 		++_cellCount;
 		return cell;
 	}
@@ -509,6 +516,33 @@ public final class Circuit
 		double potential= _parseDouble( dotSect.settings.get( "potential" ) );
 
 		return new QuantumDot( xCoord, yCoord, diameter, charge, spin, potential );
+	}
+
+	private Label _loadLabel( Section sect ) throws CircuitException
+	{
+		if( !sect.containsSubSections( "TYPE:QCADLabel" ) )
+		{
+			throw new CircuitException( "Section does not have a QCADLabel." );
+		}
+
+		Section labelSect = sect.subSections.get( "TYPE:QCADLabel" ).get( 0 );
+
+		if( !labelSect.hasSettings() )
+		{
+			throw new CircuitException( "QCADLabel section must contain settings." );
+		}
+
+		SettingsSection labelSettings = (SettingsSection)labelSect;
+
+		if( !labelSettings.containsSettings( "psz" ) )
+		{
+			throw new CircuitException( "QCADLabel section must contain a 'psz' setting." );
+		}
+
+
+		String text = labelSettings.settings.get( "psz" );
+
+		return new Label( text );
 	}
 
 	/**

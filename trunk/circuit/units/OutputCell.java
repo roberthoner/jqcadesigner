@@ -28,6 +28,7 @@
 package jqcadesigner.circuit.units;
 
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import jqcadesigner.circuit.DataTrace;
 
 /**
@@ -53,11 +54,21 @@ public class OutputCell extends Cell
 		_valueCache.setSize( size );
 	}
 
+	public void setName( String name )
+	{
+		_valueCache.name = name;
+	}
+	
+	public String getName()
+	{
+		return _valueCache.name;
+	}
+
 	public void plotPolarization()
 	{
 		if( !_valueCache.hasNext() )
 		{
-			String msg	= "Output cell " + _valueCache.getName()
+			String msg	= "Output cell " + _valueCache.name
 						+ " is out of cache space.";
 
 			throw new RuntimeException( msg );
@@ -69,6 +80,52 @@ public class OutputCell extends Cell
 	public void outputCSV( String fileName ) throws FileNotFoundException
 	{
 		_valueCache.outputCSV( fileName );
+	}
+
+	public byte[] getValues( Clock clock )
+	{
+		final double clockHigh = clock.clockHigh;
+		final double clockLow = clock.clockLow;
+		ArrayList<Byte> values = new ArrayList<Byte>();
+
+		final int granularity = _valueCache.getSize();
+
+		boolean valueSampled = false;
+		clock.reset();
+		for( int i = 0; i < granularity; ++i )
+		{
+			double crtClockValue = clock.tick();
+
+			if( !valueSampled && crtClockValue < clockLow*1.001 )
+			{
+				valueSampled = true;
+				byte value = -1;
+
+				if( _valueCache.get( i ) > 0.9 )
+				{
+					value = 1;
+				}
+				else if( _valueCache.get( i ) < -0.9 )
+				{
+					value = 0;
+				}
+
+				values.add( value );
+			}
+			else if( valueSampled && crtClockValue > clockHigh*0.999 )
+			{
+				valueSampled = false;
+			}
+		}
+
+		Byte[] b = values.toArray( new Byte[ values.size() ] );
+		byte[] byteArray = new byte[ b.length ];
+		for( int i = 0; i < byteArray.length; ++i )
+		{
+			byteArray[i] = b[i];
+		}
+
+		return byteArray;
 	}
 
 	@Override
