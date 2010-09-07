@@ -459,11 +459,11 @@ public final class Circuit
 
 		if( funcString.endsWith( "NORMAL" ) )
 		{
-			cell = new NormalCell( mode, clock, xCoord, yCoord, dotDiameter, _crtLayerNum, qDots );
+			cell = new NormalCell( this, mode, clock, xCoord, yCoord, dotDiameter, _crtLayerNum, qDots );
 		}
 		else if( funcString.endsWith( "OUTPUT" ) )
 		{
-			cell = new OutputCell( mode, clock, xCoord, yCoord, dotDiameter, _crtLayerNum, qDots );
+			cell = new OutputCell( this, mode, clock, xCoord, yCoord, dotDiameter, _crtLayerNum, qDots );
 			OutputCell ocell = (OutputCell)cell;
 			Label label = _loadLabel( cellSect );
 			ocell.setName( label.text );
@@ -471,7 +471,7 @@ public final class Circuit
 		}
 		else if( funcString.endsWith( "INPUT" ) )
 		{
-			cell = new InputCell( mode, clock, xCoord, yCoord, dotDiameter, _crtLayerNum, qDots );
+			cell = new InputCell( this, mode, clock, xCoord, yCoord, dotDiameter, _crtLayerNum, qDots );
 			InputCell icell = (InputCell)cell;
 			Label label = _loadLabel( cellSect );
 			icell.setName( label.text );
@@ -479,7 +479,7 @@ public final class Circuit
 		}
 		else if( funcString.endsWith( "FIXED" ) )
 		{
-			cell = new FixedCell( mode, clock, xCoord, yCoord, dotDiameter, _crtLayerNum, qDots );
+			cell = new FixedCell( this, mode, clock, xCoord, yCoord, dotDiameter, _crtLayerNum, qDots );
 			_fixedCells.add( (FixedCell)cell );
 		}
 		else

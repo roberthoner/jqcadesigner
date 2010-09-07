@@ -27,15 +27,17 @@
 
 package jqcadesigner.circuit.units;
 
+import jqcadesigner.circuit.Circuit;
+
 /**
  *
  * @author Robert Honer <rhoner@cs.ucla.edu>
  */
 public class FixedCell extends Cell
 {
-	public FixedCell( Mode m, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
+	public FixedCell( Circuit cir, Mode m, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
 	{
-		super( m, Function.FIXED, c, x, y, dd, ln, d );
+		super( cir, m, Function.FIXED, c, x, y, dd, ln, d );
 	}
 
 	@Override

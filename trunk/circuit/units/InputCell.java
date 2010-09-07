@@ -28,6 +28,7 @@
 package jqcadesigner.circuit.units;
 
 import java.io.FileNotFoundException;
+import jqcadesigner.circuit.Circuit;
 import jqcadesigner.circuit.DataTrace;
 
 /**
@@ -43,9 +44,9 @@ public class InputCell extends Cell
 	 */
 	public boolean active;
 
-	public InputCell( Mode m, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
+	public InputCell( Circuit cir, Mode m, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
 	{
-		super( m, Function.INPUT, c, x, y, dd, ln, d );
+		super( cir, m, Function.INPUT, c, x, y, dd, ln, d );
 
 		_inputValues = new DataTrace();
 		active = true;

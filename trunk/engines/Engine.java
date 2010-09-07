@@ -30,12 +30,15 @@ package jqcadesigner.engines;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Set;
 import java.util.logging.Logger;
 import jqcadesigner.JQCADesigner;
 
 import jqcadesigner.circuit.Circuit;
 import jqcadesigner.VectorTable;
 import jqcadesigner.circuit.Circuit.CircuitException;
+import jqcadesigner.circuit.DataTrace;
 import jqcadesigner.config.ConfigFile;
 import jqcadesigner.config.ConfigFile.ParseException;
 
@@ -96,7 +99,32 @@ public abstract class Engine
 	{
 		public long initTime;
 		public long runTime;
-		
+		protected final HashMap<String, byte[]> _outputValues;
+		protected final HashMap<String, DataTrace> _outputTraces;
+
+		public RunResults()
+		{
+			_outputValues = new HashMap<String, byte[]>();
+			_outputTraces = new HashMap<String, DataTrace>();
+		}
+
+		public String[] getOutputNames()
+		{
+			Set<String> keys = _outputValues.keySet();
+
+			return keys.toArray( new String[ keys.size() ] );
+		}
+
+		public byte[] getOutputValues( String outputName )
+		{
+			return _outputValues.get( outputName );
+		}
+
+		public DataTrace getOutputTrace( String outputName )
+		{
+			return _outputTraces.get( outputName );
+		}
+
 		abstract public void printStats();
 	}
 
