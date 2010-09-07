@@ -1,0 +1,61 @@
+#summary Reviews how to use Jython with JQCADesigner
+
+= Jython Bindings =
+
+== Introduction ==
+
+One of the major benefits of using Java is that it makes creating Python (or more specifically Jython) bindings super simple.  These bindings make it easy write quick scripts that can run simulations and work with the various data structures within JQCADesigner.
+
+== Getting started ==
+
+First, go get [http://www.jython.org/ Jython].  Second, add the JQCADesigner.jar file to your CLASSPATH environment variable.  That's it!
+
+Alternatively, you can install the Jython plugin to Netbeans and add JQCADesigner.jar to the CLASSPATH for your project.
+
+If you don't want to mess around with this whole CLASSPATH thing, you can just call
+{{{
+sys.path.append( YOUR_PATH_TO_JQCADESIGNER_JAR )
+}}}
+at the beginning of your Jython program.
+
+From Jython you can now import and use any of the JQCADesigner classes.  To make certain tasks a little more simple, there are a few useful methods that will simplify your Jython programming that I review below.
+
+== Examples ==
+Writing Jython programs that interface with JQCADesigner is super simple.  Say you want to run a bistable simulation and you don't want logging to be output.
+{{{
+from jqcadesigner import JQCADesigner
+JQCADesigner.loggingOff()
+runResults = JQCADesigner.runBistableEngine( "test.qca", "test.vt" )
+runResults.printStats()
+}}}
+
+That's it!  You'll get something that looks like this output:
+{{{
+Initialization time: 36ms
+Run time: 5679ms
+Outputs:
+      out1 1 1 0 1 0 1 0
+      out2 0 0 1 0 1 0 1
+}}}
+
+Now say that you want to take the output of one circuit and feed it into the input of another circuit.  Eventually, this will be more simple, but for now, you can easily create a new vector table file based on the output, like so:
+{{{
+from jqcadesigner import JQCADesigner
+runResults = JQCADesigner.runBistableEngine( "test.qca", "test.vt" )
+
+values1 = runResults.getOutputValues( "out1" )
+values2 = runResults.getOutputValues( "out2" )
+
+vtFile = open( "new.vt", "w" )
+
+vtFile.write( "%%VECTOR TABLE%%\n" )
+	
+# Make both active.
+vtFile.write( "11\n" )
+
+# Output the values.
+for i in range(0,len(values)):
+	vtFile.write( "%d%d\n" % (values1[i], values2[i]) )
+}}}
+
+Now the file "new.vt" can be passed to runBistableEngine.
