@@ -28,6 +28,7 @@
 package jqcadesigner.circuit.units;
 
 import jqcadesigner.JQCADConstants;
+import jqcadesigner.circuit.Circuit;
 
 /**
  *
@@ -40,12 +41,14 @@ public abstract class Cell
 
 	public final Mode mode;
 	public final Function function;
-	public final byte clock;
+	public final byte clockNum;
 	public final double xCoord;
 	public final double yCoord;
 	public final double dotDiameter;
 	public final int layerNum;
 	public final QuantumDot[] dots;
+
+	protected final Circuit _circuit;
 
 	private double _polarization;
 	
@@ -60,14 +63,15 @@ public abstract class Cell
 
 	private TickHandler _tickHandler;
 
-	public Cell( Mode m, Function f, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
+	public Cell( Circuit cir, Mode m, Function f, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
 	{
 		assert m != null && f != null && dd > 0 && d != null && d.length == 4;
 		assert d[0] != null && d[1] != null && d[2] != null && d[3] != null;
-		
+
+		_circuit = cir;
 		mode = m;
 		function = f;
-		clock = c;
+		clockNum = c;
 		xCoord = x;
 		yCoord = y;
 		dotDiameter = dd;

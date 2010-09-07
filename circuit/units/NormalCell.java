@@ -27,14 +27,16 @@
 
 package jqcadesigner.circuit.units;
 
+import jqcadesigner.circuit.Circuit;
+
 /**
  *
  * @author Robert Honer <rhoner@cs.ucla.edu>
  */
 public class NormalCell extends Cell
 {
-	public NormalCell( Mode m, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
+	public NormalCell( Circuit cir, Mode m, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
 	{
-		super( m, Function.NORMAL, c, x, y, dd, ln, d );
+		super( cir, m, Function.NORMAL, c, x, y, dd, ln, d );
 	}
 }

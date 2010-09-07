@@ -235,11 +235,8 @@ public final class BistableEngine extends Engine
 
 		_log.info( "Bistable engine running..." );
 
-		RunResults retval = new RunResults();
-
 		final Cell[][] cellMatrix = _cellMatrix;
 		final int layerCount = cellMatrix.length;
-		final int cellCount = _circuit.getCellCount();
 
 		final InputCell[] inputCells = _circuit.getInputCells();
 		final int inputCellsCount = inputCells.length;
@@ -248,20 +245,6 @@ public final class BistableEngine extends Engine
 		final int outputCellsCount = outputCells.length;
 
 		final int maxIterationsPerSample = _maxIterationsPerSample;
-
-		final Clock[] clocks = _circuit.getClocks();
-
-		for( int i = 0; i < 4; ++i )
-		{
-			try
-			{
-				clocks[i].outputCSV( "clock" + i + ".csv" );
-			}
-			catch( FileNotFoundException ex )
-			{
-				Logger.getLogger( BistableEngine.class.getName() ).log( Level.SEVERE, null, ex );
-			}
-		}
 
 		final Clock clock0 = _circuit.getClock( 0 );
 		final Clock clock1 = _circuit.getClock( 1 );
@@ -329,24 +312,7 @@ public final class BistableEngine extends Engine
 		}
 		_log.info( "Bistable engine finished running." );
 
-		for( int i = 0; i < outputCells.length; ++i )
-		{
-			for( byte v : outputCells[i].getValues( _circuit.getClock( outputCells[i].clock ) ) )
-			{
-				System.err.print( v+" " );
-			}
-			System.err.println();
-
-			try
-			{
-				outputCells[i].outputCSV( outputCells[i].getName()+".csv" );
-			}
-			catch( FileNotFoundException ex )
-			{
-				_log.log( Level.SEVERE, null, ex );
-			}
-		}
-		return retval;
+		return new RunResults( outputCells );
 	}
 
 	/**
@@ -413,7 +379,7 @@ public final class BistableEngine extends Engine
 					TickHandler th = new TickHandler(	crtCell,
 														neighbors,
 														kinkEnergies,
-														clocks[ crtCell.clock ] );
+														clocks[ crtCell.clockNum ] );
 					crtCell.setTickHandler( th );
 				}
 			}
@@ -654,10 +620,38 @@ public final class BistableEngine extends Engine
 
 	public class RunResults extends Engine.RunResults
 	{
+		protected final OutputCell[] _outputCells;
+
+		public RunResults( OutputCell[] outputCells )
+		{
+			_outputCells = outputCells;
+
+			for( OutputCell outputCell : outputCells )
+			{
+				String name = outputCell.getName();
+				_outputValues.put( name, outputCell.getValues() );
+				_outputTraces.put( name, outputCell.getTrace() );
+			}
+		}
+
 		@Override
 		public void printStats()
 		{
-			
+			System.out.printf( "Initialization time: %dms\n", initTime );
+			System.out.printf( "Run time: %dms\n", runTime );
+
+			System.out.println( "Outputs:");
+			for( int i = 0; i < _outputCells.length; ++i )
+			{
+				System.out.printf( "%10s", _outputCells[i].getName() );
+
+				for( byte v : _outputCells[i].getValues() )
+				{
+					System.out.printf( " %d", v );
+				}
+
+				System.out.println();
+			}
 		}
 	}
 }

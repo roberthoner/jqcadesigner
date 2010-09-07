@@ -27,21 +27,28 @@
 
 package jqcadesigner;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.logging.Level;
 import jqcadesigner.circuit.Circuit;
 import java.io.File;
+import java.util.logging.FileHandler;
 import java.util.logging.Logger;
+import jqcadesigner.circuit.Circuit.CircuitException;
+import jqcadesigner.config.ConfigFile;
 
 import jqcadesigner.engines.BistableEngine;
 import jqcadesigner.engines.Engine;
+import jqcadesigner.engines.Engine.EngineException;
 
-// Todos for Alpha:
-// TODO: Put a pointer to the circuit in each of the cells?
+// Todos for Beta:
+// TODO: Add a method to circuit to get cell list, instead of matrix, that cells can be ticked randomly accross layers. Hopefully that will fix the issue with the XOR circuit.
+// TODO: Test and debug.
 // TODO: make it so if no vector table file is specified, it automatically loads an exhaustive vector table.
 public class JQCADesigner
 {
 	public static final String		PROGRAM_NAME = "JQCADesigner";
-	public static final String		PROGRAM_VERSION = "0.1a";
+	public static final String		PROGRAM_VERSION = "0.1b";
 	public static final String[][]	PROGRAM_AUTHORS = { {"Robert Honer", "rhoner@ucla.edu"} };
 	public static final String		PROGRAM_LICENSE = "BSD";
 
@@ -53,7 +60,6 @@ public class JQCADesigner
 	static
 	{
 		log = Logger.getLogger( JQCADesigner.class.getName() );
-
 		try
 		{
 			// The circuit file.
@@ -77,8 +83,8 @@ public class JQCADesigner
 			// Whether or not to output verbosely.
 			options.addOption( "--verbose", true );
 
-			// Whether or not to run in command line mode.
-			options.addOption( "--clm", true );
+			// Whether or not to run in GUI mode.
+			options.addOption( "--gui", false );
 		}
 		catch( Exception ex )
 		{
@@ -101,13 +107,13 @@ public class JQCADesigner
 			System.exit( 1 );
 		}
 
-		if( (Boolean)options.get( "--clm" ) )
+		if( (Boolean)options.get( "--gui" ) )
 		{
-			enterCommandLineMode();
+			enterGUIMode();
 		}
 		else
 		{
-			enterGUIMode();
+			enterCommandLineMode();
 		}
 	}
 
@@ -165,7 +171,7 @@ public class JQCADesigner
 	{
 		System.err.println( "GUI mode is not implemented." );
 	}
-
+	
 	public static void handleArgs( String[] args ) throws Exception
 	{
 		assert args != null && options != null;
@@ -221,5 +227,94 @@ public class JQCADesigner
 				+ "[-c engine_config_file] [-n number_of_simulations] "
 				+ "[-t radial_tolerance] [-vt vector_table_file]"
 			);
+	}
+
+	// Below this are API methods for Jython.
+
+	public static void loggingOff()
+	{
+		log.setLevel( Level.OFF );
+	}
+
+	public static void loggingOn()
+	{
+		log.setLevel( Level.INFO );
+	}
+
+	public static void verboseLoggingOn()
+	{
+		log.setLevel( Level.ALL );
+	}
+
+	public static void addLogFile( String file ) throws IOException
+	{
+		FileHandler fh = new FileHandler( file );
+
+		log.addHandler( fh );
+	}
+
+	/**
+	 * Run the bistable engine without a configuration file.
+	 *
+	 * This method exists primarily for use with Jython.  It makes running the
+	 * simulation much simpler.
+	 *
+	 * @param circuitFile The file containing the circuit.
+	 * @param vectorTableFile The file containing the vector table.
+	 * @return The RunResults from the run.
+	 *
+	 * @throws jqcadesigner.circuit.Circuit.CircuitException
+	 * @throws IOException
+	 * @throws jqcadesigner.config.ConfigFile.ParseException
+	 * @throws jqcadesigner.engines.Engine.EngineException
+	 * @throws FileNotFoundException
+	 * @throws jqcadesigner.VectorTable.ParseException
+	 */
+	public static BistableEngine.RunResults runBistableEngine(	String circuitFile,
+																String vectorTableFile )
+		throws	CircuitException,
+				IOException,
+				ConfigFile.ParseException,
+				EngineException,
+				FileNotFoundException,
+				VectorTable.ParseException
+	{
+		return runBistableEngine( circuitFile, vectorTableFile, null );
+	}
+
+	/**
+	 * Run the bistable engine with a configuration file.
+	 *
+	 * This method exists primarily for use with Jython.  It makes running the
+	 * simulation much simpler.
+	 *
+	 * @param circuitFile The file containing the circuit.
+	 * @param vectorTableFile The file containing the vector table.
+	 * @param configFileName The bistable engine configuration file.
+	 * @return The RunResults from the run.
+	 *
+	 * @throws jqcadesigner.circuit.Circuit.CircuitException
+	 * @throws IOException
+	 * @throws jqcadesigner.config.ConfigFile.ParseException
+	 * @throws jqcadesigner.engines.Engine.EngineException
+	 * @throws FileNotFoundException
+	 * @throws jqcadesigner.VectorTable.ParseException
+	 */
+	public static BistableEngine.RunResults runBistableEngine(	String circuitFile,
+																String vectorTableFile,
+																String configFileName )
+		throws	CircuitException,
+				IOException,
+				ConfigFile.ParseException,
+				EngineException,
+				FileNotFoundException,
+				VectorTable.ParseException
+	{
+		Circuit circuit = new Circuit( circuitFile );
+		VectorTable vectorTable = new VectorTable( vectorTableFile );
+
+		BistableEngine bistableEngine = new BistableEngine( circuit, configFileName );
+
+		return (BistableEngine.RunResults)bistableEngine.run( vectorTable );
 	}
 }

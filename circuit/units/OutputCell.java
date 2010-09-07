@@ -29,6 +29,7 @@ package jqcadesigner.circuit.units;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import jqcadesigner.circuit.Circuit;
 import jqcadesigner.circuit.DataTrace;
 
 /**
@@ -42,9 +43,9 @@ public class OutputCell extends Cell
 	 */
 	private final DataTrace _valueCache;
 
-	public OutputCell( Mode m, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
+	public OutputCell( Circuit cir, Mode m, byte c, double x, double y, double dd, int ln, QuantumDot[] d )
 	{
-		super( m, Function.OUTPUT, c, x, y, dd, ln, d );
+		super( cir, m, Function.OUTPUT, c, x, y, dd, ln, d );
 
 		_valueCache = new DataTrace( "Output" );
 	}
@@ -82,8 +83,15 @@ public class OutputCell extends Cell
 		_valueCache.outputCSV( fileName );
 	}
 
-	public byte[] getValues( Clock clock )
+	public DataTrace getTrace()
 	{
+		return _valueCache;
+	}
+
+	public byte[] getValues()
+	{
+		Clock clock = _circuit.getClock( clockNum );
+
 		final double clockHigh = clock.clockHigh;
 		final double clockLow = clock.clockLow;
 		ArrayList<Byte> values = new ArrayList<Byte>();
