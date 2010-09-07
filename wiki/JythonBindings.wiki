@@ -1,12 +1,10 @@
 #summary Reviews how to use Jython with JQCADesigner
 
-= Jython Bindings =
-
-== Introduction ==
+= Introduction =
 
 One of the major benefits of using Java is that it makes creating Python (or more specifically Jython) bindings super simple.  These bindings make it easy write quick scripts that can run simulations and work with the various data structures within JQCADesigner.
 
-== Getting started ==
+= Getting started =
 
 First, go get [http://www.jython.org/ Jython].  Second, add the JQCADesigner.jar file to your CLASSPATH environment variable.  That's it!
 
@@ -20,7 +18,7 @@ at the beginning of your Jython program.
 
 From Jython you can now import and use any of the JQCADesigner classes.  To make certain tasks a little more simple, there are a few useful methods that will simplify your Jython programming that I review below.
 
-== Examples ==
+= Examples =
 Writing Jython programs that interface with JQCADesigner is super simple.  Say you want to run a bistable simulation and you don't want logging to be output.
 {{{
 from jqcadesigner import JQCADesigner
