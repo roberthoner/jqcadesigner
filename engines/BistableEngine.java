@@ -78,7 +78,7 @@ public final class BistableEngine extends Engine
 	protected final double	_layerSeparation;
 	protected final boolean	_randomizeCells;
 	
-	protected Cell[][] _cellMatrix;
+	protected Cell[] _cellList;
 	
 	protected final double _kinkConstant;
 
@@ -164,8 +164,11 @@ public final class BistableEngine extends Engine
 		_clockAmplitudeFactor	= configSect.get(	"clock_amplitude_factor",
 													DefaultConfig.CLOCK_AMPLITUDE_FACTOR );
 
-		_maxIterationsPerSample	= configSect.get(	"max_iterations_per_sample",
-													DefaultConfig.MAX_ITERATIONS_PER_SAMPLE );
+		// The casting here is to get around an issue with the max_iterations_per_sample
+		// value in the config file.  Even though it should be an integer, it's entered
+		// in the file as a double.
+		_maxIterationsPerSample	= (int)configSect.get(	"max_iterations_per_sample",
+													(double)DefaultConfig.MAX_ITERATIONS_PER_SAMPLE );
 
 		_layerSeparation		= configSect.get(	"layer_separation",
 													DefaultConfig.LAYER_SEPARATION );
@@ -206,25 +209,31 @@ public final class BistableEngine extends Engine
 
 
 		final Cell[][] cellMatrix = _circuit.getCellMatrix();
+		final Cell[] cellList = _circuit.getCellList();
 
 		// Tell the cells not to update their dots, we don't need this information
 		// for this engine and it will just waste CPU.
-		for( Cell[] layer : cellMatrix )
+//		for( Cell[] layer : cellMatrix )
+//		{
+//			for( Cell cell : layer )
+//			{
+//				cell.setUpdateDots( false );
+//			}
+//		}
+
+		for( Cell cell : cellList )
 		{
-			for( Cell cell : layer )
-			{
-				cell.setUpdateDots( false );
-			}
+			cell.setUpdateDots( false );
 		}
 
 		if( _randomizeCells )
 		{
-			_randomizeCells( cellMatrix );
+			_randomizeCells( cellList );
 		}
 
-		_initCells( cellMatrix, _circuit.getClocks() );
+		_initCells( cellList, _circuit.getClocks() );
 
-		_cellMatrix = cellMatrix;
+		_cellList = cellList;
 		_log.info( "Bistable engine finished initializing." );
 	}
 
@@ -235,8 +244,8 @@ public final class BistableEngine extends Engine
 
 		_log.info( "Bistable engine running..." );
 
-		final Cell[][] cellMatrix = _cellMatrix;
-		final int layerCount = cellMatrix.length;
+		final Cell[] cellList = _cellList;
+		final int cellCount = cellList.length;
 
 		final InputCell[] inputCells = _circuit.getInputCells();
 		final int inputCellsCount = inputCells.length;
@@ -267,7 +276,7 @@ public final class BistableEngine extends Engine
 
 			if( _randomizeCells )
 			{
-				_randomizeCells( cellMatrix );
+				_randomizeCells( cellList );
 			}
 
 			int iterationCount = 0;
@@ -282,23 +291,17 @@ public final class BistableEngine extends Engine
 				}
 
 				// Update the cells.
-				for( int layerNum = layerCount - 1; layerNum >= 0; --layerNum )
+				for( int cellNum = cellCount - 1; cellNum >= 0; --cellNum )
 				{
-					final Cell[] cellLayer = cellMatrix[ layerNum ];
-					final int cellsInLayer = cellLayer.length;
+					final Cell crtCell = cellList[ cellNum ];
 
-					for( int cellNum = cellsInLayer - 1; cellNum >= 0; --cellNum )
+					final Cell.Function crtFunc = crtCell.function;
+					if( crtFunc == Cell.Function.NORMAL
+						|| crtFunc == Cell.Function.OUTPUT
+						|| (crtFunc == Cell.Function.INPUT
+							&& !((InputCell)crtCell).active) )
 					{
-						final Cell crtCell = cellLayer[ cellNum ];
-
-						final Cell.Function crtFunc = crtCell.function;
-						if( crtFunc == Cell.Function.NORMAL
-							|| crtFunc == Cell.Function.OUTPUT
-							|| (crtFunc == Cell.Function.INPUT
-								&& !((InputCell)crtCell).active) )
-						{
-							crtCell.tick();
-						}
+						crtCell.tick();
 					}
 				}
 			}
@@ -318,30 +321,24 @@ public final class BistableEngine extends Engine
 	/**
 	 * Randomly swaps the cells around. Makes as many swaps as there are cells.
 	 *
-	 * @param cellMatrix
+	 * @param cellList
 	 */
-	protected void _randomizeCells( final Cell[][] cellMatrix )
+	protected void _randomizeCells( final Cell[] cellList )
 	{
-		assert cellMatrix != null;
+		assert cellList != null;
 
 		MersenneTwisterFast rand = new MersenneTwisterFast();
 
-		int layerCount = cellMatrix.length;
-		for( int i = layerCount - 1; i >= 0; --i )
+		// Perform as many swaps as there are cells.
+		final int cellCount = cellList.length;
+		for( int i = cellCount - 1; i >= 0; --i )
 		{
-			Cell[] crtLayer = cellMatrix[i];
-			int crtCellCount = crtLayer.length;
+			int index1 = rand.nextInt( cellCount );
+			int index2 = rand.nextInt( cellCount );
 
-			// Perform as many swaps as there are cells.
-			for( int j = crtCellCount; j > 0; --j )
-			{
-				int index1 = rand.nextInt( crtCellCount );
-				int index2 = rand.nextInt( crtCellCount );
-
-				Cell swap = crtLayer[ index1 ];
-				crtLayer[ index1 ] = crtLayer[ index2 ];
-				crtLayer[ index2 ] = swap;
-			}
+			Cell swap = cellList[ index1 ];
+			cellList[ index1 ] = cellList[ index2 ];
+			cellList[ index2 ] = swap;
 		}
 	}
 
@@ -351,37 +348,33 @@ public final class BistableEngine extends Engine
 	 * Calculates the _neighbors and kink energies for each cell in the
 	 * cellMatrix. Sets the cells' TickHandlers.
 	 *
-	 * @param cellMatrix
+	 * @param cellList
 	 */
-	protected void _initCells( final Cell[][] cellMatrix, final Clock[] clocks )
+	protected void _initCells( final Cell[] cellList, final Clock[] clocks )
 	{
 		final KinkEnergyCache kinkCache = new KinkEnergyCache();
 
-		final int layerCount = cellMatrix.length;
-		for( int i = 0; i < layerCount; ++i )
+		final int cellCount = cellList.length;
+
+		// Counting backwards for performance
+		for( int i = cellCount - 1; i >= 0; --i )
 		{
-			int crtCellCount = cellMatrix[i].length;
+			final Cell crtCell = cellList[i];
+			final Cell.Function crtFunc = crtCell.function;
 
-			// Counting backwards for performance
-			for( int j = crtCellCount - 1; j >= 0; --j )
+			if( crtFunc == Cell.Function.NORMAL
+				|| crtFunc == Cell.Function.OUTPUT
+				|| (crtFunc == Cell.Function.INPUT
+					&& !((InputCell)crtCell).active) )
 			{
-				final Cell crtCell = cellMatrix[i][j];
-				final Cell.Function crtFunc = crtCell.function;
+				Cell[] neighbors = _findCellNeighbors( cellList, crtCell );
+				double[] kinkEnergies = _calcKinkEnergies( kinkCache, crtCell, neighbors );
 
-				if( crtFunc == Cell.Function.NORMAL
-					|| crtFunc == Cell.Function.OUTPUT
-					|| (crtFunc == Cell.Function.INPUT
-						&& !((InputCell)crtCell).active) )
-				{
-					Cell[] neighbors = _findCellNeighbors( cellMatrix, crtCell );
-					double[] kinkEnergies = _calcKinkEnergies( kinkCache, crtCell, neighbors );
-
-					TickHandler th = new TickHandler(	crtCell,
-														neighbors,
-														kinkEnergies,
-														clocks[ crtCell.clockNum ] );
-					crtCell.setTickHandler( th );
-				}
+				TickHandler th = new TickHandler(	crtCell,
+													neighbors,
+													kinkEnergies,
+													clocks[ crtCell.clockNum ] );
+				crtCell.setTickHandler( th );
 			}
 		}
 	}
@@ -389,14 +382,14 @@ public final class BistableEngine extends Engine
 	/**
 	 * Finds the _neighbors of a cell within a cellMatrix.
 	 *
-	 * @param cellMatrix
+	 * @param cellList
 	 * @param cell The cell to find the _neighbors of.
 	 * @return The cells determined to be within the radius of effect.
 	 */
-	protected Cell[] _findCellNeighbors(	final Cell[][] cellMatrix,
+	protected Cell[] _findCellNeighbors(	final Cell[] cellList,
 											final Cell cell )
 	{
-		assert cellMatrix != null && cell != null;
+		assert cellList != null && cell != null;
 
 		final int cellLayerNum = cell.layerNum;
 
@@ -405,31 +398,26 @@ public final class BistableEngine extends Engine
 
 		final ArrayList<Cell> neighbors = new ArrayList<Cell>();
 
-		int layerCount = cellMatrix.length;
-		for( int i = layerCount - 1; i >= 0; --i )
+		int cellCount = cellList.length;
+		for( int i = cellCount - 1; i >= 0; --i )
 		{
-			int crtCellCount = cellMatrix[i].length;
+			Cell crtCell = cellList[i];
 
-			for( int j = crtCellCount - 1; j >= 0; --j )
+			if( crtCell != cell )
 			{
-				Cell crtCell = cellMatrix[i][j];
+				double xDiff = crtCell.xCoord - cell.xCoord;
+				double yDiff = crtCell.yCoord - cell.yCoord;
 
-				if( crtCell != cell )
+				double zDiff	= Math.abs( crtCell.layerNum - cellLayerNum )
+								* layerSeparation;
+
+				double distanceSqrd	=	(xDiff * xDiff)
+									+	(yDiff * yDiff)
+									+	(zDiff * zDiff);
+
+				if( distanceSqrd < radiusOfEffectSqrd )
 				{
-					double xDiff = crtCell.xCoord - cell.xCoord;
-					double yDiff = crtCell.yCoord - cell.yCoord;
-
-					double zDiff	= Math.abs( crtCell.layerNum - cellLayerNum )
-									* layerSeparation;
-
-					double distanceSqrd	=	(xDiff * xDiff)
-										+	(yDiff * yDiff)
-										+	(zDiff * zDiff);
-
-					if( distanceSqrd < radiusOfEffectSqrd )
-					{
-						neighbors.add( crtCell );
-					}
+					neighbors.add( crtCell );
 				}
 			}
 		}

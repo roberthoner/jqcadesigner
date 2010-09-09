@@ -95,6 +95,29 @@ public final class Circuit
 		return _cellCount;
 	}
 
+	public Cell[] getCellList()
+	{
+		Cell[][] cellMatrix = getCellMatrix();
+
+		int listSize = 0;
+		for( Cell[] cellLayer : cellMatrix )
+		{
+			listSize += cellLayer.length;
+		}
+
+		int listIndex = 0;
+		Cell[] cellList = new Cell[ listSize ];
+		for( Cell[] cellLayer : cellMatrix )
+		{
+			for( Cell cell : cellLayer )
+			{
+				cellList[ listIndex++ ] = cell;
+			}
+		}
+
+		return cellList;
+	}
+
 	public Cell[][] getCellMatrix()
 	{
 		Cell[][] matrix = new Cell[ _layers.size() ][];
